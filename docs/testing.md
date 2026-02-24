@@ -165,3 +165,102 @@ The [GitHub Actions workflow](../.github/workflows/test.yml) runs on every push/
 5. Run Web Unit Tests (27 tests)
 6. Run Backend E2E Tests (13 tests, via Testcontainers)
 ```
+
+---
+
+## Stress Testing (k6)
+
+### Purpose
+
+The flash sale system's core promise is **safe concurrent stock management** — hundreds of users competing for limited items without overselling, double-purchases, or data corruption. Stress testing validates this promise under realistic production-like load.
+
+### What It Validates
+
+| Concern | How the stress test proves it |
+|---------|-------------------------------|
+| **No overselling** | Total `201 Purchased` responses ≤ available stock |
+| **No duplicate purchases** | Same userId never gets two `201`s — subsequent attempts get `409` |
+| **Redis atomicity** | `DECR` correctly gates stock under concurrent writes |
+| **PostgreSQL integrity** | Advisory lock + transaction prevents race conditions |
+| **Latency under load** | p95 response time stays under 1 second |
+| **Graceful degradation** | After stock runs out, all requests get `400 Sold Out` instantly |
+
+### Script Location
+
+[`e2e/stress/flash-sale.stress.js`](../e2e/stress/flash-sale.stress.js)
+
+### Load Profile
+
+The script simulates a realistic flash sale traffic pattern with 3 stages:
+
+```
+Users
+ 200 ┤                 ┌──────────────────────┐
+     │                /                        \
+  50 ┤         ┌─────┘                          \
+     │        /                                  \
+   0 ┤───────┘                                    └──────
+     └──────────┬──────────────┬──────────────┬──────────
+              10s            20s            40s        50s
+            Ramp-up      Sustained         Cool-down
+```
+
+| Stage | Duration | Virtual Users | Purpose |
+|-------|----------|---------------|---------|
+| Ramp-up | 10s | 0 → 50 | Gradual load increase |
+| Sustained peak | 30s | 50 → 200 | Max concurrent buyers |
+| Cool-down | 10s | 200 → 0 | Graceful wind-down |
+
+### Custom Metrics
+
+| Metric | Description |
+|--------|-------------|
+| `purchase_success` | Requests that returned `201 Created` |
+| `purchase_duplicate` | Requests that returned `409 Already Purchased` |
+| `purchase_sold_out` | Requests that returned `400 Sold Out` |
+| `purchase_errors` | Unexpected response codes |
+| `purchase_duration` | End-to-end request timing |
+
+### Pass/Fail Thresholds
+
+| Threshold | Condition |
+|-----------|-----------|
+| `http_req_duration` | p95 < 1000ms |
+| `http_req_failed` | Rate < 1% (network-level failures) |
+| `purchase_success` | Count > 0 (at least some purchases succeed) |
+
+### How to Run
+
+```bash
+# Prerequisites: ensure the stack is running with seeded data
+docker compose up -d
+cd apps/backend && npm run seed
+
+# Option 1: k6 installed locally
+k6 run e2e/stress/flash-sale.stress.js
+
+# Option 2: Docker (no install needed)
+docker run --rm -i --network=host \
+  grafana/k6 run - < e2e/stress/flash-sale.stress.js
+
+# Custom target (e.g. staging)
+k6 run -e BASE_URL=http://staging:3001 e2e/stress/flash-sale.stress.js
+```
+
+### Sample Output
+
+```
+╔══════════════════════════════════════════════════╗
+║           Flash Flow — Stress Test Results        ║
+╠══════════════════════════════════════════════════╣
+║  Total Requests:         4582                    ║
+║  ✅ Purchased:            100                    ║
+║  🔁 Duplicate (409):        0                    ║
+║  🚫 Sold Out (400):      4482                    ║
+║  ❌ Errors:                  0                    ║
+║                                                  ║
+║  p95 Latency:    45ms                            ║
+║  p99 Latency:    82ms                            ║
+║  Avg Latency:    12ms                            ║
+╚══════════════════════════════════════════════════╝
+```

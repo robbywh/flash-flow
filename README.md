@@ -159,29 +159,34 @@ cd apps/backend
 npm run test:e2e
 ```
 
-### 3. Stress Testing
+### 3. Stress Testing (k6)
 
-Since Flash Flow is built to handle high concurrency, you can stress test it locally using tools like [Autocannon](https://github.com/mcollina/autocannon) or [k6](https://k6.io/).
+Stress tests simulate hundreds of concurrent users competing for limited stock during a flash sale. This validates concurrency safety, Redis atomicity, and performance under load.
 
-**Using Autocannon (Node.js):**
-
-1. Ensure the development server and Docker containers are running (`docker compose up -d` and `npm run dev`).
-2. Run autocannon to simulate 1000 concurrent connections over 10 seconds attempting to purchase:
+**Prerequisites:** Install [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) or use Docker.
 
 ```bash
-# Run without installing globally
-npx autocannon -c 1000 -d 10 -m POST \
-  -H "Content-Type: application/json" \
-  -b '{"userId": "stress-user-1"}' \
-  http://localhost:3001/api/v1/flash-sales/current/purchase
+# 1. Start the full stack
+docker compose up -d
+cd apps/backend && npm run seed
+
+# 2. Run the stress test (k6 installed locally)
+k6 run e2e/stress/flash-sale.stress.js
+
+# 2. Or run via Docker (no install needed)
+docker run --rm -i --network=host \
+  grafana/k6 run - < e2e/stress/flash-sale.stress.js
+
+# Custom base URL (e.g. staging server)
+k6 run -e BASE_URL=http://staging:3001 e2e/stress/flash-sale.stress.js
 ```
 
-**Using k6 (Docker):**
+The script simulates a 3-stage load pattern:
+1. **Ramp-up** — 0→50 users over 10s
+2. **Sustained peak** — 200 concurrent users for 30s
+3. **Cool-down** — 200→0 users over 10s
 
-```bash
-docker run --rm -i grafana/k6 run - <script.js
-```
-*(You can write a simple k6 script to hit the purchase endpoint with random user IDs).*
+See [docs/testing.md](docs/testing.md) for detailed test documentation.
 
 ## Database Management (Prisma)
 
