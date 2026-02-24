@@ -1,0 +1,42 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    # Required for Testcontainers to spin up Docker services
+    env:
+      DOCKER_HOST: unix:///var/run/docker.sock
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate Prisma Client
+        run: cd apps/backend && npx prisma generate
+
+      - name: Run Backend Unit Tests
+        run: cd apps/backend && npm run test
+
+      - name: Run Web Unit Tests
+        run: cd apps/web && npm run test
+
+      - name: Run Backend E2E Tests
+        # Ensure docker is ready for Testcontaines
+        run: cd apps/backend && npm run test:e2e

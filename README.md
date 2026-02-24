@@ -1,135 +1,213 @@
-# Turborepo starter
+# Flash Flow
 
-This Turborepo starter is maintained by the Turborepo core team.
+A high-throughput flash sale platform built with **Turborepo**, featuring a **NestJS** backend API and a **React 19** web application. Designed to handle thousands of concurrent purchase attempts with atomic stock management.
 
-## Using this example
+## Tech Stack
 
-Run the following command:
+| Layer     | Technology                                                  |
+| --------- | ----------------------------------------------------------- |
+| Monorepo  | [Turborepo](https://turborepo.dev/) · npm workspaces        |
+| Backend   | [NestJS 11](https://nestjs.com/) · Express · Node.js ≥ 18  |
+| Frontend  | [React 19](https://react.dev/) · [TanStack Start](https://tanstack.com/start) · [Vite 7](https://vite.dev/) |
+| Styling   | [Tailwind CSS v4](https://tailwindcss.com/)                 |
+| Database  | [PostgreSQL 16](https://www.postgresql.org/) via [Prisma 7](https://www.prisma.io/) |
+| Cache     | [Redis 7](https://redis.io/) (atomic stock counter)         |
+| Language  | [TypeScript 5](https://www.typescriptlang.org/)             |
+| Testing   | [Vitest](https://vitest.dev/) (both apps)                   |
+| Linting   | [ESLint](https://eslint.org/) · [Prettier](https://prettier.io/) |
 
-```sh
-npx create-turbo@latest
-```
-
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+## Project Structure
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+flash-flow/
+├── apps/
+│   ├── backend/                # NestJS API (port 3001)
+│   │   ├── prisma/
+│   │   │   └── schema.prisma   # Database schema
+│   │   └── src/
+│   │       ├── platform/       # Database (Prisma), Redis modules
+│   │       ├── features/
+│   │       │   └── flash-sale/ # Flash sale feature (vertical slice)
+│   │       ├── main.ts
+│   │       └── seed.ts         # DB seed script
+│   └── web/                    # React 19 + TanStack Start (port 3000)
+│       └── src/
+│           ├── features/
+│           │   └── flash-sale/ # Components, API, types
+│           └── routes/
+├── docs/
+│   └── fsd.md                  # Functional Specification Document
+├── docker-compose.yml          # PostgreSQL + Redis
+├── turbo.json
+└── package.json
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Getting Started
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+### Prerequisites
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+- **Node.js** ≥ 18
+- **npm** ≥ 11
+- **Docker** & **Docker Compose** (for PostgreSQL and Redis)
 
-### Develop
+### 1. Install Dependencies
 
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+```bash
+npm install
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### 2. Start Application (Docker)
 
+You can run the ENTIRE stack (PostgreSQL, Redis, Backend API, and React Web App) using Docker Compose:
+
+```bash
+docker compose up --build -d
 ```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
+This starts:
+- **PostgreSQL 16** on `localhost:5433` (user: `flash`, password: `flash`, db: `flash_flow`)
+- **Redis 7** on `localhost:6379`
+- **Backend API** on [http://localhost:3001](http://localhost:3001)
+- **Frontend App** on [http://localhost:3000](http://localhost:3000)
+
+*(Note: The first build will take a few minutes as it creates the Turborepo multi-stage images).*
+
+### 3. Push Database Schema
+
+Apply the Prisma schema to your database:
+
+```bash
+cd apps/backend && npm run db:push
+```
+
+### 4. Seed the Database
+
+Create a sample flash sale (100 items, active for 30 minutes):
+
+```bash
+cd apps/backend && npm run seed
+```
+
+### 5. Start Development Servers
+
+From the root of the project:
+
+```bash
+npm run dev
+```
+
+This starts both apps simultaneously:
+- **Backend API:** [http://localhost:3001](http://localhost:3001)
+- **Frontend:** [http://localhost:3000](http://localhost:3000)
+
+Or run individually:
+
+```bash
+# Backend only
+npx turbo dev --filter=backend
+
+# Frontend only
 npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
 ```
 
-### Remote Caching
+### 6. Stop Infrastructure
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+```bash
+docker compose down        # Stop containers (keep data)
+docker compose down -v     # Stop containers and delete data
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## API Endpoints
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+| Method | Endpoint                               | Description            |
+| ------ | -------------------------------------- | ---------------------- |
+| GET    | `/api/v1/flash-sales/current`          | Get current sale status |
+| POST   | `/api/v1/flash-sales/current/purchase` | Attempt a purchase      |
+| GET    | `/api/v1/flash-sales/current/purchase` | Check user's purchase   |
 
+## Testing
+
+The project uses **Vitest** for all automated testing.
+
+### 1. Unit Tests
+
+Unit tests run extremely fast and do not require any external infrastructure. Business logic (`.logic.ts`) is tested purely, and services (`.service.ts`) are tested using mocks.
+
+```bash
+cd apps/backend
+
+# Run unit tests
+npm run test
+
+# Run in watch mode (for development)
+npm run test:watch
+
+# Run with coverage report
+npm run test:cov
 ```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+### 2. End-to-End (E2E) Tests
+
+E2E tests interact with actual endpoints and use **Testcontainers** to spin up ephemeral PostgreSQL and Redis Docker containers. **They will not touch your local development database.**
+
+*Note: Ensure Docker is running before executing E2E tests.*
+
+```bash
+cd apps/backend
+
+# Run E2E tests
+npm run test:e2e
 ```
 
-## Useful Links
+### 3. Stress Testing
 
-Learn more about the power of Turborepo:
+Since Flash Flow is built to handle high concurrency, you can stress test it locally using tools like [Autocannon](https://github.com/mcollina/autocannon) or [k6](https://k6.io/).
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+**Using Autocannon (Node.js):**
+
+1. Ensure the development server and Docker containers are running (`docker compose up -d` and `npm run dev`).
+2. Run autocannon to simulate 1000 concurrent connections over 10 seconds attempting to purchase:
+
+```bash
+# Run without installing globally
+npx autocannon -c 1000 -d 10 -m POST \
+  -H "Content-Type: application/json" \
+  -b '{"userId": "stress-user-1"}' \
+  http://localhost:3001/api/v1/flash-sales/current/purchase
+```
+
+**Using k6 (Docker):**
+
+```bash
+docker run --rm -i grafana/k6 run - <script.js
+```
+*(You can write a simple k6 script to hit the purchase endpoint with random user IDs).*
+
+## Database Management (Prisma)
+
+```bash
+cd apps/backend
+
+npm run db:push      # Push schema changes to DB (dev)
+npm run db:migrate   # Create migration (production)
+npm run db:studio    # Open Prisma Studio (GUI)
+```
+
+## Architecture
+
+The system uses a **two-layer concurrency strategy** for safe stock management:
+
+1. **Redis** — atomic `DECR` as a fast stock gate (O(1) rejection when sold out)
+2. **PostgreSQL** — advisory lock + transaction as source of truth (prevents overselling)
+
+See [docs/fsd.md](docs/fsd.md) for the full Functional Specification Document, including architecture diagrams, ERD, API specs, and design trade-offs.
+
+## Key Design Decisions
+
+| Decision | Rationale |
+| -------- | --------- |
+| Redis stock gate | Protects DB from thundering herd — instant rejection at O(1) |
+| PostgreSQL advisory lock | Serializes concurrent purchases without table locking |
+| Prisma ORM | Type-safe database access with auto-generated client |
+| Feature-based modules | Each feature is a vertical slice with isolated business logic |
+| Pure business logic | Side-effect free functions for testability |

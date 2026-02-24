@@ -1,118 +1,138 @@
-import { createFileRoute } from '@tanstack/react-router'
-import {
-  Zap,
-  Server,
-  Route as RouteIcon,
-  Shield,
-  Waves,
-  Sparkles,
-} from 'lucide-react'
+import { createFileRoute } from '@tanstack/react-router';
+import { useState, useEffect, useCallback } from 'react';
+import { Zap } from 'lucide-react';
+import { SaleStatus } from '../features/flash-sale/components/SaleStatus';
+import { PurchaseButton } from '../features/flash-sale/components/PurchaseButton';
+import { PurchaseResult } from '../features/flash-sale/components/PurchaseResult';
+import { flashSaleApi } from '../features/flash-sale';
+import type { FlashSaleData } from '../features/flash-sale';
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute('/')({ component: FlashSalePage });
 
-function App() {
-  const features = [
-    {
-      icon: <Zap className="w-12 h-12 text-cyan-400" />,
-      title: 'Powerful Server Functions',
-      description:
-        'Write server-side code that seamlessly integrates with your client components. Type-safe, secure, and simple.',
-    },
-    {
-      icon: <Server className="w-12 h-12 text-cyan-400" />,
-      title: 'Flexible Server Side Rendering',
-      description:
-        'Full-document SSR, streaming, and progressive enhancement out of the box. Control exactly what renders where.',
-    },
-    {
-      icon: <RouteIcon className="w-12 h-12 text-cyan-400" />,
-      title: 'API Routes',
-      description:
-        'Build type-safe API endpoints alongside your application. No separate backend needed.',
-    },
-    {
-      icon: <Shield className="w-12 h-12 text-cyan-400" />,
-      title: 'Strongly Typed Everything',
-      description:
-        'End-to-end type safety from server to client. Catch errors before they reach production.',
-    },
-    {
-      icon: <Waves className="w-12 h-12 text-cyan-400" />,
-      title: 'Full Streaming Support',
-      description:
-        'Stream data from server to client progressively. Perfect for AI applications and real-time updates.',
-    },
-    {
-      icon: <Sparkles className="w-12 h-12 text-cyan-400" />,
-      title: 'Next Generation Ready',
-      description:
-        'Built from the ground up for modern web applications. Deploy anywhere JavaScript runs.',
-    },
-  ]
+function FlashSalePage() {
+  const [sale, setSale] = useState<FlashSaleData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState('');
+  const [purchasing, setPurchasing] = useState(false);
+  const [purchaseSuccess, setPurchaseSuccess] = useState<boolean | null>(null);
+  const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
+  const [purchaseId, setPurchaseId] = useState<string | undefined>();
+
+  const fetchSale = useCallback(async () => {
+    try {
+      const data = await flashSaleApi.getCurrentSale();
+      setSale(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load sale');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSale();
+    const interval = setInterval(fetchSale, 3000);
+    return () => clearInterval(interval);
+  }, [fetchSale]);
+
+  const handlePurchase = async () => {
+    if (!userId.trim() || purchasing) return;
+
+    setPurchasing(true);
+    setPurchaseSuccess(null);
+    setPurchaseMessage(null);
+    setPurchaseId(undefined);
+
+    try {
+      const result = await flashSaleApi.attemptPurchase(userId.trim());
+      setPurchaseSuccess(true);
+      setPurchaseMessage(
+        `You've secured a ${result.productName}! Confirmation ID: ${result.purchaseId}`,
+      );
+      setPurchaseId(result.purchaseId);
+      fetchSale(); // Refresh stock
+    } catch (err) {
+      setPurchaseSuccess(false);
+      setPurchaseMessage(
+        err instanceof Error ? err.message : 'Purchase failed',
+      );
+    } finally {
+      setPurchasing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <section className="relative py-20 px-6 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center justify-center gap-6 mb-6">
-            <img
-              src="/tanstack-circle-logo.png"
-              alt="TanStack Logo"
-              className="w-24 h-24 md:w-32 md:h-32"
-            />
-            <h1 className="text-6xl md:text-7xl font-black text-white [letter-spacing:-0.08em]">
-              <span className="text-gray-300">TANSTACK</span>{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                START
-              </span>
-            </h1>
-          </div>
-          <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
-            The framework for next generation AI applications
-          </p>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
-            Full-stack framework powered by TanStack Router for React and Solid.
-            Build modern applications with server functions, streaming, and type
-            safety.
-          </p>
-          <div className="flex flex-col items-center gap-4">
-            <a
-              href="https://tanstack.com/start"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
-            >
-              Documentation
-            </a>
-            <p className="text-gray-400 text-sm mt-2">
-              Begin your TanStack Start journey by editing{' '}
-              <code className="px-2 py-1 bg-slate-700 rounded text-cyan-400">
-                /src/routes/index.tsx
-              </code>
-            </p>
-          </div>
+      {/* Header */}
+      <header className="relative py-8 px-6 text-center">
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5" />
+        <div className="relative flex items-center justify-center gap-3">
+          <Zap className="w-10 h-10 text-cyan-400" />
+          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
+            <span className="text-gray-300">FLASH</span>{' '}
+            <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              FLOW
+            </span>
+          </h1>
         </div>
-      </section>
+        <p className="text-gray-400 mt-2 text-lg">
+          Lightning-fast flash sales
+        </p>
+      </header>
 
-      <section className="py-16 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
+      {/* Main Content */}
+      <main className="max-w-2xl mx-auto px-6 pb-20 space-y-8">
+        {/* Sale Status */}
+        <section className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8">
+          <SaleStatus sale={sale} loading={loading} error={error} />
+        </section>
+
+        {/* Purchase Form */}
+        <section className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 space-y-6">
+          <h3 className="text-xl font-semibold text-white text-center">
+            Secure Your Item
+          </h3>
+
+          {/* User ID Input */}
+          <div className="max-w-md mx-auto">
+            <label
+              htmlFor="userId"
+              className="block text-sm font-medium text-gray-400 mb-2"
             >
-              <div className="mb-4">{feature.icon}</div>
-              <h3 className="text-xl font-semibold text-white mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-gray-400 leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+              Your User ID (email or username)
+            </label>
+            <input
+              id="userId"
+              type="text"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              placeholder="user@example.com"
+              disabled={sale?.status !== 'active' || purchaseSuccess === true}
+              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+          </div>
+
+          {/* Purchase Button */}
+          <div className="flex justify-center">
+            <PurchaseButton
+              userId={userId}
+              disabled={purchaseSuccess === true}
+              loading={purchasing}
+              saleStatus={sale?.status ?? null}
+              onPurchase={handlePurchase}
+            />
+          </div>
+
+          {/* Purchase Result */}
+          <PurchaseResult
+            success={purchaseSuccess}
+            message={purchaseMessage}
+            purchaseId={purchaseId}
+          />
+        </section>
+      </main>
     </div>
-  )
+  );
 }

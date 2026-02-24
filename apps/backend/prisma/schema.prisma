@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model FlashSale {
+  id             String     @id @default(uuid()) @db.Uuid
+  productName    String     @map("product_name") @db.VarChar(255)
+  totalStock     Int        @map("total_stock")
+  remainingStock Int        @map("remaining_stock")
+  startTime      DateTime   @map("start_time") @db.Timestamptz()
+  endTime        DateTime   @map("end_time") @db.Timestamptz()
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
+  purchases      Purchase[]
+
+  @@map("flash_sales")
+}
+
+model Purchase {
+  id          String   @id @default(uuid()) @db.Uuid
+  flashSaleId String   @map("flash_sale_id") @db.Uuid
+  userId      String   @map("user_id") @db.VarChar(255)
+  status      String   @default("confirmed") @db.VarChar(20)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  flashSale FlashSale @relation(fields: [flashSaleId], references: [id])
+
+  @@unique([flashSaleId, userId], name: "uq_purchases_sale_user")
+  @@map("purchases")
+}
