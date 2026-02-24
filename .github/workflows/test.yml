@@ -31,6 +31,9 @@ jobs:
       - name: Generate Prisma Client
         run: cd apps/backend && npx prisma generate
 
+      - name: Run Linting
+        run: npm run lint
+
       - name: Run Backend Unit Tests
         run: cd apps/backend && npm run test
 
