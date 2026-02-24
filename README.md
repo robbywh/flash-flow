@@ -88,7 +88,9 @@ Create a sample flash sale (100 items, active for 30 minutes):
 cd apps/backend && npm run seed
 ```
 
-### 5. Start Development Servers
+### 5. Start Development Servers (without Docker)
+
+> **Skip this step if you're using `docker compose up`.** Docker Compose already starts both the backend and frontend.
 
 From the root of the project:
 
@@ -166,15 +168,17 @@ Stress tests simulate hundreds of concurrent users competing for limited stock d
 **Prerequisites:** Install [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) or use Docker.
 
 ```bash
-# 1. Start the full stack
-docker compose up -d
-cd apps/backend && npm run seed
+# 1. Start with relaxed rate limit for stress testing
+THROTTLE_LIMIT=10000 docker compose up -d
 
-# 2. Run via Docker (no install needed — works on macOS)
+# 2. Push schema and seed (required after fresh docker compose up -v)
+cd apps/backend && npm run db:push && npm run seed
+
+# 3. Run the stress test
 docker run --rm -i --add-host=host.docker.internal:host-gateway \
   grafana/k6 run - < e2e/stress/flash-sale.stress.js
 
-# 2. Or with k6 installed locally
+# Or with k6 installed locally
 k6 run -e BASE_URL=http://localhost:3001 e2e/stress/flash-sale.stress.js
 ```
 
