@@ -218,6 +218,7 @@ Users
 | `purchase_success` | Requests that returned `201 Created` |
 | `purchase_duplicate` | Requests that returned `409 Already Purchased` |
 | `purchase_sold_out` | Requests that returned `400 Sold Out` |
+| `purchase_rate_limited` | Requests that returned `429 Too Many Requests` |
 | `purchase_errors` | Unexpected response codes |
 | `purchase_duration` | End-to-end request timing |
 
@@ -236,27 +237,25 @@ Users
 docker compose up -d
 cd apps/backend && npm run seed
 
-# Option 1: k6 installed locally
-k6 run e2e/stress/flash-sale.stress.js
-
-# Option 2: Docker (no install needed)
-docker run --rm -i --network=host \
+# Option 1: Docker (no install needed — works on macOS)
+docker run --rm -i --add-host=host.docker.internal:host-gateway \
   grafana/k6 run - < e2e/stress/flash-sale.stress.js
 
-# Custom target (e.g. staging)
-k6 run -e BASE_URL=http://staging:3001 e2e/stress/flash-sale.stress.js
+# Option 2: k6 installed locally
+k6 run -e BASE_URL=http://localhost:3001 e2e/stress/flash-sale.stress.js
 ```
 
 ### Sample Output
 
 ```
 ╔══════════════════════════════════════════════════╗
-║           Flash Flow — Stress Test Results        ║
+║         Flash Flow — Stress Test Results          ║
 ╠══════════════════════════════════════════════════╣
 ║  Total Requests:         4582                    ║
 ║  ✅ Purchased:            100                    ║
-║  🔁 Duplicate (409):        0                    ║
-║  🚫 Sold Out (400):      4482                    ║
+║  🔁 Duplicate (409):       15                    ║
+║  🚫 Sold Out (400):      3200                    ║
+║  ⏳ Rate Limited:        1267                    ║
 ║  ❌ Errors:                  0                    ║
 ║                                                  ║
 ║  p95 Latency:    45ms                            ║

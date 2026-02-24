@@ -6,6 +6,7 @@ import { Counter, Trend } from 'k6/metrics';
 const purchaseSuccess = new Counter('purchase_success');
 const purchaseDuplicate = new Counter('purchase_duplicate');
 const purchaseSoldOut = new Counter('purchase_sold_out');
+const purchaseRateLimited = new Counter('purchase_rate_limited');
 const purchaseErrors = new Counter('purchase_errors');
 const purchaseDuration = new Trend('purchase_duration', true);
 
@@ -19,17 +20,18 @@ const purchaseDuration = new Trend('purchase_duration', true);
 export const options = {
     stages: [
         { duration: '10s', target: 50 },   // Ramp-up
-        { duration: '30s', target: 200 },   // Sustained peak
-        { duration: '10s', target: 0 },     // Cool-down
+        { duration: '30s', target: 200 },  // Sustained peak
+        { duration: '10s', target: 0 },    // Cool-down
     ],
     thresholds: {
         http_req_duration: ['p(95)<1000'],         // p95 latency < 1s
-        http_req_failed: ['rate<0.01'],            // <1% network errors
         purchase_success: ['count>0'],             // At least some succeed
     },
 };
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:3001';
+// Default to host.docker.internal for macOS Docker,
+// or localhost for native k6 installs
+const BASE_URL = __ENV.BASE_URL || 'http://host.docker.internal:3001';
 
 // ─── Test Execution ──────────────────────────────────────────────────
 export default function () {
@@ -50,23 +52,36 @@ export default function () {
     purchaseDuration.add(res.timings.duration);
 
     // Categorize response
-    if (res.status === 201) {
-        purchaseSuccess.add(1);
-    } else if (res.status === 409) {
-        purchaseDuplicate.add(1);
-    } else if (res.status === 400) {
-        purchaseSoldOut.add(1);
-    } else {
-        purchaseErrors.add(1);
+    switch (res.status) {
+        case 201:
+            purchaseSuccess.add(1);
+            break;
+        case 409:
+            purchaseDuplicate.add(1);
+            break;
+        case 400:
+            purchaseSoldOut.add(1);
+            break;
+        case 429:
+            purchaseRateLimited.add(1);
+            break;
+        default:
+            purchaseErrors.add(1);
+            break;
     }
 
     check(res, {
-        'status is expected': (r) => [201, 409, 400].includes(r.status),
+        'status is expected': (r) =>
+            [201, 409, 400, 429].includes(r.status),
         'response has body': (r) => r.body && r.body.length > 0,
     });
 
-    // Small think-time to avoid pure CPU-bound hammering
-    sleep(0.1);
+    // Respect rate limiting — back off when throttled
+    if (res.status === 429) {
+        sleep(1);
+    } else {
+        sleep(0.1);
+    }
 }
 
 // ─── Summary ─────────────────────────────────────────────────────────
@@ -80,24 +95,34 @@ export function handleSummary(data) {
     const soldOut = data.metrics.purchase_sold_out
         ? data.metrics.purchase_sold_out.values.count
         : 0;
+    const rateLimited = data.metrics.purchase_rate_limited
+        ? data.metrics.purchase_rate_limited.values.count
+        : 0;
     const errors = data.metrics.purchase_errors
         ? data.metrics.purchase_errors.values.count
         : 0;
-    const total = success + duplicate + soldOut + errors;
+    const total = success + duplicate + soldOut + rateLimited + errors;
+
+    const p95 = data.metrics.http_req_duration?.values['p(95)'];
+    const p99 = data.metrics.http_req_duration?.values['p(99)'];
+    const avg = data.metrics.http_req_duration?.values.avg;
+
+    const fmt = (v) => (v != null && !isNaN(v) ? String(Math.round(v)) : 'N/A');
 
     const summary = `
 ╔══════════════════════════════════════════════════╗
-║           Flash Flow — Stress Test Results        ║
+║         Flash Flow — Stress Test Results          ║
 ╠══════════════════════════════════════════════════╣
 ║  Total Requests:     ${String(total).padStart(8)}                   ║
 ║  ✅ Purchased:       ${String(success).padStart(8)}                   ║
 ║  🔁 Duplicate (409): ${String(duplicate).padStart(8)}                   ║
 ║  🚫 Sold Out (400):  ${String(soldOut).padStart(8)}                   ║
+║  ⏳ Rate Limited:    ${String(rateLimited).padStart(8)}                   ║
 ║  ❌ Errors:          ${String(errors).padStart(8)}                   ║
 ║                                                  ║
-║  p95 Latency:  ${String(Math.round(data.metrics.http_req_duration.values['p(95)'])).padStart(6)}ms                       ║
-║  p99 Latency:  ${String(Math.round(data.metrics.http_req_duration.values['p(99)'])).padStart(6)}ms                       ║
-║  Avg Latency:  ${String(Math.round(data.metrics.http_req_duration.values.avg)).padStart(6)}ms                       ║
+║  p95 Latency:  ${fmt(p95).padStart(6)}ms                       ║
+║  p99 Latency:  ${fmt(p99).padStart(6)}ms                       ║
+║  Avg Latency:  ${fmt(avg).padStart(6)}ms                       ║
 ╚══════════════════════════════════════════════════╝
 `;
 

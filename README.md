@@ -170,15 +170,12 @@ Stress tests simulate hundreds of concurrent users competing for limited stock d
 docker compose up -d
 cd apps/backend && npm run seed
 
-# 2. Run the stress test (k6 installed locally)
-k6 run e2e/stress/flash-sale.stress.js
-
-# 2. Or run via Docker (no install needed)
-docker run --rm -i --network=host \
+# 2. Run via Docker (no install needed — works on macOS)
+docker run --rm -i --add-host=host.docker.internal:host-gateway \
   grafana/k6 run - < e2e/stress/flash-sale.stress.js
 
-# Custom base URL (e.g. staging server)
-k6 run -e BASE_URL=http://staging:3001 e2e/stress/flash-sale.stress.js
+# 2. Or with k6 installed locally
+k6 run -e BASE_URL=http://localhost:3001 e2e/stress/flash-sale.stress.js
 ```
 
 The script simulates a 3-stage load pattern:
