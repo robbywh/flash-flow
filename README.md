@@ -165,11 +165,15 @@ npm run test:e2e
 
 Stress tests simulate hundreds of concurrent users competing for limited stock during a flash sale. This validates concurrency safety, Redis atomicity, and performance under load.
 
+> **Rate Limiting:** The API uses a sliding window throttler (100 requests per minute per client). For stress testing, you may want to temporarily increase the `limit` in `apps/backend/src/app.module.ts`.
+
+> **Rebuilding after code changes:** If you modify the source code while Docker is running, rebuild with `docker compose up --build -d`. Without `--build`, Docker reuses the cached image from the last build.
+
 **Prerequisites:** Install [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) or use Docker.
 
 ```bash
-# 1. Start with relaxed rate limit for stress testing
-THROTTLE_LIMIT=10000 docker compose up -d
+# 1. Start infrastructure (add --build if code changed)
+docker compose up --build -d
 
 # 2. Push schema and seed (required after fresh docker compose up -v)
 cd apps/backend && npm run db:push && npm run seed

@@ -232,9 +232,13 @@ Users
 
 ### How to Run
 
+> **Note:** The API enforces a sliding window rate limit of **100 requests per minute** per client (configured in `apps/backend/src/app.module.ts`). For stress testing, you may want to temporarily increase the `limit` value.
+
+> **Rebuilding after code changes:** If you modify the source code while Docker is running, rebuild with `docker compose up --build -d`. Without `--build`, Docker reuses the cached image.
+
 ```bash
-# Prerequisites: ensure the stack is running with seeded data
-docker compose up -d
+# Prerequisites: ensure the stack is running with seeded data (add --build if code changed)
+docker compose up --build -d
 cd apps/backend && npm run seed
 
 # Option 1: Docker (no install needed — works on macOS)
