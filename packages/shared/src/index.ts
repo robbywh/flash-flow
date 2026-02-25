@@ -1,1 +1,1 @@
-export * from './flash-sale.types';
+export * from "./flash-sale.types";

@@ -1,31 +1,36 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useState, useEffect, useCallback } from 'react';
-import { Zap } from 'lucide-react';
-import { SaleStatus } from '../features/flash-sale/components/SaleStatus';
-import { PurchaseButton } from '../features/flash-sale/components/PurchaseButton';
-import { PurchaseResult } from '../features/flash-sale/components/PurchaseResult';
-import { flashSaleApi } from '../features/flash-sale';
-import type { FlashSaleData } from '../features/flash-sale';
+import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect, useCallback } from "react";
+import { Zap } from "lucide-react";
+import { SaleStatus } from "../features/flash-sale/components/SaleStatus";
+import { PurchaseButton } from "../features/flash-sale/components/PurchaseButton";
+import { PurchaseResult } from "../features/flash-sale/components/PurchaseResult";
+import { flashSaleApi } from "../features/flash-sale";
+import type { FlashSaleData } from "../features/flash-sale";
 
-export const Route = createFileRoute('/')({ component: FlashSalePage });
+export const Route = createFileRoute("/")({ component: FlashSalePage });
 
 const getFriendlyErrorMessage = (error: any): string => {
   const message = error instanceof Error ? error.message : String(error);
 
-  if (message.includes('RATE_LIMIT_EXCEEDED') || message.includes('Too Many Requests') || message.includes('failed to fetch')) {
+  if (
+    message.includes("RATE_LIMIT_EXCEEDED") ||
+    message.includes("Too Many Requests") ||
+    message.includes("failed to fetch")
+  ) {
     return "Slow down! You're making too many requests. Please wait a moment.";
   }
-  if (message.includes('SOLD_OUT')) {
+  if (message.includes("SOLD_OUT")) {
     return "Too late! This drop has been fully secured by others.";
   }
-  if (message.includes('ALREADY_PURCHASED')) {
+  if (message.includes("ALREADY_PURCHASED")) {
     return "You've already secured your allocation for this drop.";
   }
-  if (message.includes('SALE_NOT_ACTIVE')) {
-    if (message.includes('upcoming')) return "Preparation in progress. This drop hasn't started yet.";
+  if (message.includes("SALE_NOT_ACTIVE")) {
+    if (message.includes("upcoming"))
+      return "Preparation in progress. This drop hasn't started yet.";
     return "This drop has concluded. Stay tuned for the next one!";
   }
-  if (message.includes('VALIDATION_ERROR')) {
+  if (message.includes("VALIDATION_ERROR")) {
     return "Identity verification failed. Please check your credentials.";
   }
 
@@ -36,7 +41,7 @@ function FlashSalePage() {
   const [sale, setSale] = useState<FlashSaleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userId, setUserId] = useState('');
+  const [userId, setUserId] = useState("");
   const [purchasing, setPurchasing] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState<boolean | null>(null);
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
@@ -64,7 +69,7 @@ function FlashSalePage() {
     setPurchaseSuccess(null);
     setPurchaseMessage(null);
     setPurchaseId(undefined);
-    setUserId('');
+    setUserId("");
   };
 
   const handlePurchase = async () => {
@@ -100,7 +105,7 @@ function FlashSalePage() {
             <Zap className="w-6 h-6 text-cyan-400" />
           </div>
           <h1 className="text-4xl md:text-6xl font-black tracking-tighter">
-            <span className="text-white">FLASH</span>{' '}
+            <span className="text-white">FLASH</span>{" "}
             <span className="text-gradient">FLOW</span>
           </h1>
         </div>
@@ -151,7 +156,9 @@ function FlashSalePage() {
                           }
                         }}
                         placeholder="e.g. robbywh"
-                        disabled={sale?.status !== 'active' || purchaseSuccess === true}
+                        disabled={
+                          sale?.status !== "active" || purchaseSuccess === true
+                        }
                         className="w-full px-5 py-4 bg-slate-900/50 border border-slate-700/50 rounded-2xl text-white placeholder-slate-700 focus:outline-none focus:border-cyan-500/30 focus:ring-4 focus:ring-cyan-500/5 transition-all disabled:opacity-50"
                       />
                     </div>
@@ -159,16 +166,21 @@ function FlashSalePage() {
                     {/* External Info Area */}
                     <div className="h-12 flex items-center px-1 shrink-0">
                       <div className="w-full">
-                        {!userId.trim() && sale?.status === 'active' && purchaseSuccess === null && (
-                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider animate-pulse">
-                            Requires a valid identity to proceed
-                          </p>
-                        )}
-                        {userId.trim() && userId.trim().length < 3 && sale?.status === 'active' && purchaseSuccess === null && (
-                          <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider leading-tight">
-                            Identity must be at least 3 characters
-                          </p>
-                        )}
+                        {!userId.trim() &&
+                          sale?.status === "active" &&
+                          purchaseSuccess === null && (
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider animate-pulse">
+                              Requires a valid identity to proceed
+                            </p>
+                          )}
+                        {userId.trim() &&
+                          userId.trim().length < 3 &&
+                          sale?.status === "active" &&
+                          purchaseSuccess === null && (
+                            <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider leading-tight">
+                              Identity must be at least 3 characters
+                            </p>
+                          )}
                       </div>
                     </div>
 
@@ -186,8 +198,11 @@ function FlashSalePage() {
                 {/* Hint Box - Compact */}
                 <div className="p-4 rounded-xl border border-blue-500/10 bg-blue-500/5">
                   <p className="text-[10px] text-blue-300/80 leading-relaxed font-medium text-center">
-                    <span className="font-black text-blue-200 uppercase tracking-tighter mr-1">Tip:</span>
-                    Every millisecond counts. Ensure your connection is stable before attempting.
+                    <span className="font-black text-blue-200 uppercase tracking-tighter mr-1">
+                      Tip:
+                    </span>
+                    Every millisecond counts. Ensure your connection is stable
+                    before attempting.
                   </p>
                 </div>
               </div>
