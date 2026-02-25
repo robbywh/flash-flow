@@ -52,22 +52,31 @@ export default function () {
     purchaseDuration.add(res.timings.duration);
 
     // Categorize response
-    switch (res.status) {
-        case 201:
-            purchaseSuccess.add(1);
-            break;
-        case 409:
+    if (res.status === 201) {
+        purchaseSuccess.add(1);
+    } else if (res.status === 429) {
+        purchaseRateLimited.add(1);
+    } else if (res.status === 409 || res.status === 400 || res.status === 404) {
+        let errorCode = '';
+        try {
+            const body = JSON.parse(res.body);
+            errorCode = body.error?.code || '';
+        } catch (e) {
+            // Not JSON
+        }
+
+        if (errorCode === 'ALREADY_PURCHASED') {
             purchaseDuplicate.add(1);
-            break;
-        case 400:
+        } else if (errorCode === 'SOLD_OUT') {
             purchaseSoldOut.add(1);
-            break;
-        case 429:
-            purchaseRateLimited.add(1);
-            break;
-        default:
+        } else if (res.status === 400) {
+            // Other validation errors
             purchaseErrors.add(1);
-            break;
+        } else {
+            purchaseErrors.add(1);
+        }
+    } else {
+        purchaseErrors.add(1);
     }
 
     check(res, {

@@ -182,7 +182,7 @@ The flash sale system's core promise is **safe concurrent stock management** —
 | **Redis atomicity** | `DECR` correctly gates stock under concurrent writes |
 | **PostgreSQL integrity** | Advisory lock + transaction prevents race conditions |
 | **Latency under load** | p95 response time stays under 1 second |
-| **Graceful degradation** | After stock runs out, all requests get `400 Sold Out` instantly |
+| **Graceful degradation** | After stock runs out, all requests get `409 SOLD_OUT` instantly |
 
 ### Script Location
 
@@ -216,7 +216,7 @@ Users
 |--------|-------------|
 | `purchase_success` | Requests that returned `201 Created` |
 | `purchase_duplicate` | Requests that returned `409 Already Purchased` |
-| `purchase_sold_out` | Requests that returned `400 Sold Out` |
+| `purchase_sold_out` | Requests that returned `409 SOLD_OUT` |
 | `purchase_rate_limited` | Requests that returned `429 Too Many Requests` |
 | `purchase_errors` | Unexpected response codes |
 | `purchase_duration` | End-to-end request timing |
@@ -257,7 +257,7 @@ k6 run -e BASE_URL=http://localhost:3001 e2e/stress/flash-sale.stress.js
 ║  Total Requests:         4582                    ║
 ║  ✅ Purchased:            100                    ║
 ║  🔁 Duplicate (409):       15                    ║
-║  🚫 Sold Out (400):      3200                    ║
+║  🚫 Sold Out (409):      3200                    ║
 ║  ⏳ Rate Limited:        1267                    ║
 ║  ❌ Errors:                  0                    ║
 ║                                                  ║

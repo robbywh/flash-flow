@@ -359,6 +359,7 @@ These live in `flash-sale.logic.ts` with zero I/O dependencies:
 
 Simulate high concurrency to prove:
 - **No overselling** — N concurrent requests for M items (M < N) results in exactly M purchases
+- **Graceful degradation** — After stock runs out, all requests get `409 SOLD_OUT` instantly
 - **One per user** — same user sending multiple requests gets only one purchase
 - **Performance** — p99 latency under load
 
