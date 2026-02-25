@@ -6,76 +6,36 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  HttpException,
 } from '@nestjs/common';
 import { FlashSaleService } from './flash-sale.service';
-import { FlashSaleError } from './flash-sale.errors';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  FlashSaleDto,
+  AttemptPurchaseRequestDto,
+  PurchaseResultDto,
+  UserPurchaseCheckDto,
+} from './flash-sale.dto';
 
 @Controller('api/v1/flash-sales')
 export class FlashSaleController {
-  constructor(private readonly flashSaleService: FlashSaleService) {}
+  constructor(private readonly flashSaleService: FlashSaleService) { }
 
   @Get('current')
-  async getCurrentSale() {
-    try {
-      const sale = await this.flashSaleService.getCurrentSale();
-      return { data: sale };
-    } catch (error) {
-      this.handleError(error);
-    }
+  async getCurrentSale(): Promise<FlashSaleDto> {
+    return this.flashSaleService.getCurrentSale();
   }
 
   @Post('current/purchase')
   @HttpCode(HttpStatus.CREATED)
-  async attemptPurchase(@Body() body: { userId: string }) {
-    try {
-      const result = await this.flashSaleService.attemptPurchase(body.userId);
-      return { data: result };
-    } catch (error) {
-      this.handleError(error);
-    }
+  async attemptPurchase(
+    @Body() body: AttemptPurchaseRequestDto,
+  ): Promise<PurchaseResultDto> {
+    return this.flashSaleService.attemptPurchase(body.userId);
   }
 
   @Get('current/purchase')
-  async checkUserPurchase(@Query('userId') userId: string) {
-    try {
-      const result = await this.flashSaleService.checkUserPurchase(userId);
-      return { data: result };
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  private handleError(error: unknown): never {
-    const correlationId = uuidv4();
-
-    if (error instanceof FlashSaleError) {
-      throw new HttpException(
-        {
-          status: 'error',
-          code: error.statusCode,
-          error: {
-            code: error.errorCode,
-            message: error.message,
-            correlationId,
-          },
-        },
-        error.statusCode,
-      );
-    }
-
-    throw new HttpException(
-      {
-        status: 'error',
-        code: 500,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred.',
-          correlationId,
-        },
-      },
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
+  async checkUserPurchase(
+    @Query('userId') userId: string,
+  ): Promise<UserPurchaseCheckDto> {
+    return this.flashSaleService.checkUserPurchase(userId);
   }
 }

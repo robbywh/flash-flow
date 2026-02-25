@@ -18,17 +18,17 @@ describe('PurchaseButton', () => {
         expect(button).toBeEnabled();
     });
 
-    it('shows "Enter your User ID" when userId is empty', () => {
+    it('shows "Buy Now" when userId is empty', () => {
         render(<PurchaseButton {...defaultProps} userId="" />);
         const button = screen.getByRole('button');
-        expect(button).toHaveTextContent('Enter your User ID');
+        expect(button).toHaveTextContent('Buy Now');
         expect(button).toBeDisabled();
     });
 
-    it('shows "User ID too short" when userId is less than 3 chars', () => {
+    it('shows "Buy Now" when userId is less than 3 chars', () => {
         render(<PurchaseButton {...defaultProps} userId="ab" />);
         const button = screen.getByRole('button');
-        expect(button).toHaveTextContent('User ID too short');
+        expect(button).toHaveTextContent('Buy Now');
         expect(button).toBeDisabled();
     });
 

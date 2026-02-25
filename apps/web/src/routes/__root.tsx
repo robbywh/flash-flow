@@ -15,6 +15,10 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
+        name: 'description',
+        content: 'Experience Flash Flow, the future of high-throughput commerce. Secure, scalable, and lightning-fast flash sales for elite products.',
+      },
+      {
         title: 'Flash Flow — High-Throughput Flash Sale',
       },
     ],

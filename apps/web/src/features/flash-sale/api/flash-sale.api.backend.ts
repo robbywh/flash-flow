@@ -4,14 +4,14 @@ import type {
     PurchaseResult,
     UserPurchaseCheck,
     ApiResponse,
-    ApiError,
+    ApiErrorResponse,
 } from '../types/flash-sale.types';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 async function handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-        const errorBody = (await response.json()) as ApiError;
+        const errorBody = (await response.json()) as ApiErrorResponse;
         throw new Error(errorBody.error?.message ?? 'An unexpected error occurred');
     }
     const body = (await response.json()) as ApiResponse<T>;

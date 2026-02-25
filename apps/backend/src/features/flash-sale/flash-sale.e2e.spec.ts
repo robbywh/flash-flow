@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, HttpStatus } from '@nestjs/common';
+import { INestApplication, HttpStatus, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../../platform/database/database.module';
@@ -17,6 +17,8 @@ import {
 import { RedisContainer, StartedRedisContainer } from '@testcontainers/redis';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { TransformInterceptor } from '../../platform/server/transform.interceptor';
+import { HttpExceptionFilter } from '../../platform/server/http-exception.filter';
 
 const execAsync = promisify(exec);
 
@@ -66,6 +68,18 @@ describe('FlashSale E2E', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+
+    // Apply global standards to E2E app
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
+    app.useGlobalInterceptors(new TransformInterceptor());
+    app.useGlobalFilters(new HttpExceptionFilter());
+
     await app.init();
 
     prisma = app.get(PrismaService);
