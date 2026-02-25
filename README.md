@@ -15,10 +15,19 @@ A high-throughput flash sale platform built with **Turborepo**, featuring a **Ne
 Run the entire stack including infrastructure, backend, and frontend with a single command:
 
 ```bash
+# 1. Start all services
 docker compose up --build -d
+
+# 2. Push schema and Seed (Critical for first run)
+cd apps/backend
+npm run db:push
+npm run seed
 ```
 
 ### 2. Infrastructure Setup
+> [!NOTE]
+> Skip this if you used the **Simple Start** (Docker) method. Use this only for local development.
+
 If you prefer running apps locally but infrastructure (Postgres/Redis) in Docker:
 
 ```bash
@@ -32,6 +41,9 @@ npm run seed
 ```
 
 ### 3. Start Development Servers
+> [!NOTE]
+> Skip this if you used the **Simple Start** (Docker) method.
+
 From the root of the project:
 
 ```bash
@@ -52,7 +64,7 @@ Flash Flow uses a vertically sliced feature-based architecture. To handle traffi
 
 ---
 
-## � API Endpoints
+## 🚀 API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
