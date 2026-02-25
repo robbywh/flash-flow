@@ -115,8 +115,7 @@ npx turbo dev --filter=web
 ### 6. Stop Infrastructure
 
 ```bash
-docker compose down        # Stop containers (keep data)
-docker compose down -v     # Stop containers and delete data
+docker compose down        # Stop containers
 ```
 
 ## API Endpoints
@@ -179,6 +178,7 @@ docker compose up --build -d
 cd apps/backend && npm run db:push && npm run seed
 
 # 3. Run the stress test
+cd ../..
 docker run --rm -i --add-host=host.docker.internal:host-gateway \
   grafana/k6 run - < e2e/stress/flash-sale.stress.js
 

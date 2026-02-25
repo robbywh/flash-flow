@@ -36,9 +36,6 @@ services:
       DATABASE_URL: postgresql://flash:flash@postgres:5432/flash_flow?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      # Rate limiting (override for stress tests: THROTTLE_LIMIT=10000)
-      THROTTLE_TTL: ${THROTTLE_TTL:-10000}
-      THROTTLE_LIMIT: ${THROTTLE_LIMIT:-20}
     depends_on:
       postgres:
         condition: service_healthy
