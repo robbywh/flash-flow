@@ -24,6 +24,7 @@ graph TD
         GW["API Gateway<br/>(Express + Guards)"]
         RL["Rate Limiter<br/>(Throttler)"]
         SC["Flash Sale Controller"]
+        FS["Flash Sale Service<br/>(Orchestrator)"]
         SL["Flash Sale Logic<br/>(Pure Business Rules)"]
         SS["Flash Sale Storage<br/>(Interface)"]
     end
@@ -35,8 +36,9 @@ graph TD
 
     FE -->|HTTP| GW
     GW --> RL --> SC
-    SC --> SL
-    SL --> SS
+    SC --> FS
+    FS --> SL
+    FS --> SS
     SS --> PG
     SS --> RD
 ```
@@ -232,41 +234,45 @@ GET /api/v1/flash-sales/current/purchase?userId=user@example.com
 sequenceDiagram
     actor User
     participant FE as Frontend
-    participant API as NestJS API
+    participant SC as Controller
+    participant FS as Service (Doing)
+    participant SL as Logic (Thinking)
     participant Redis
     participant PG as PostgreSQL
 
     User->>FE: Click "Buy Now"
-    FE->>API: POST /purchase {userId}
+    FE->>SC: POST /purchase {userId}
 
-    API->>API: Validate input
-    API->>API: Check sale is active (time-based)
-
-    API->>Redis: DECR flash_sale:{id}:stock
+    SC->>FS: attemptPurchase(userId)
+    
+    FS->>SL: validateUserId(userId)
+    SL-->>FS: valid: true
+    
+    FS->>FS: Get sale (from SS/Postgres)
+    
+    FS->>SL: computeSaleStatus(Times)
+    SL-->>FS: active
+    
+    FS->>Redis: DECR flash_sale:{id}:stock
     alt Stock <= 0
-        API->>Redis: INCR (rollback)
-        API-->>FE: 409 SOLD_OUT
+        FS->>Redis: INCR (rollback)
+        FS-->>SC: throw SoldOutError
+        SC-->>FE: 409 SOLD_OUT
     else Stock > 0
-        API->>PG: BEGIN TX + Advisory Lock
-        PG->>PG: Check unique(sale_id, user_id)
-        alt Already purchased
-            API->>Redis: INCR (rollback)
-            API-->>FE: 409 ALREADY_PURCHASED
-        else New purchase
-            PG->>PG: INSERT purchase
-            PG->>PG: UPDATE remaining_stock (CHECK >= 0)
-            PG->>PG: COMMIT
-            API-->>FE: 201 PURCHASE_CONFIRMED
-        end
+        FS->>PG: BEGIN TX + Advisory Lock
+        PG->>PG: INSERT purchase
+        PG->>PG: COMMIT
+        FS-->>SC: Success Response
+        SC-->>FE: 201 PURCHASE_CONFIRMED
     end
 ```
 
-### Why this ordering matters
+### 5.1 Why this ordering matters
 
-1. **Redis first** — filters out the vast majority of requests (sold-out fast rejection) at O(1) cost
-2. **DECR then DB** — if the DB operation fails, we `INCR` Redis to restore the counter
-3. **Advisory lock** — prevents race conditions between the uniqueness check and the insert
-4. **DB CHECK constraint** — final safety net against negative stock (defense-in-depth)
+1. **Redis Gate** — The `FlashSaleService` decrements Redis *before* starting any DB transaction. This acts as an O(1) fast-rejection layer that protects the PostgreSQL instance from 99% of the load during a massive traffic spike.
+2. **Safety Rollback** — If the `FlashSaleStorage` (Postgres) throws an error (e.g., duplicate user or generic DB failure), the Service immediately calls `INCR` on Redis to restore the global stock counter, ensuring eventual consistency between the cache and source-of-truth.
+3. **Advisory Lock** — Inside the PostgreSQL transaction, we acquire a `pg_advisory_xact_lock` hashed to the `saleId`. This ensures that even if two requests for the same user pass the Redis gate at the exact same millisecond, they are strictly serialized at the database level.
+4. **The "Rugged" Check** — Even if all higher-level logic fails, the database schema includes a `CHECK (remaining_stock >= 0)` constraint as the absolute final line of defense against overselling.
 
 ---
 
