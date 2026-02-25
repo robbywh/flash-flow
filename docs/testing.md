@@ -41,8 +41,8 @@ All unit tests run in-memory using `MockFlashSaleStorage` and `MockFlashSaleRedi
 | | should deny when stock is zero | Stock exhaustion |
 | | should deny when user already purchased | Duplicate prevention |
 | | should prioritize sale status over stock check | Error precedence |
-| **validateUserId** | should accept valid userId | Valid email format |
-| | should accept alphanumeric username | Valid username format |
+| **validateUserId** | should accept valid userId | Identity format check |
+| | should accept alphanumeric username | Alphanumeric support |
 | | should reject empty string | Empty input guard |
 | | should reject non-string input | Type guard |
 | | should reject too short userId | Min length (3 chars) |
@@ -94,7 +94,7 @@ E2E tests spin up a real NestJS app with **Testcontainers** (PostgreSQL + Redis)
 
 ---
 
-## Frontend Tests (`apps/web`) — 27 tests
+## Frontend Tests (`apps/web`) — 26 tests
 
 All frontend tests use **Vitest** + **React Testing Library** + **jsdom**. No browser or backend server required.
 
@@ -105,8 +105,8 @@ All frontend tests use **Vitest** + **React Testing Library** + **jsdom**. No br
 | Test | What it verifies |
 |------|------------------|
 | shows "Buy Now" when sale is active and userId is valid | Happy path: enabled button |
-| shows "Enter your User ID" when userId is empty | Disabled state + label |
-| shows "User ID too short" when userId < 3 chars | Validation feedback |
+| shows "Buy Now" (disabled) when userId is empty | Disabled state when empty |
+| shows "Buy Now" (disabled) when userId < 3 chars | Disabled state when too short |
 | shows "Sale Not Started" when saleStatus is upcoming | Pre-sale disabled state |
 | shows "Sale Ended" when saleStatus is ended | Post-sale disabled state |
 | shows "Processing..." when loading is true | Loading spinner + disabled |
@@ -123,7 +123,7 @@ All frontend tests use **Vitest** + **React Testing Library** + **jsdom**. No br
 | shows success banner without purchase ID | Success modal without optional field |
 | shows failure banner with error message | Red error modal + message |
 
-#### `SaleStatus.spec.tsx` — Sale Status Display (9 tests)
+#### `SaleStatus.spec.tsx` — Sale Status Display (8 tests)
 
 | Test | What it verifies |
 |------|------------------|
@@ -161,7 +161,7 @@ The [GitHub Actions workflow](../.github/workflows/test.yml) runs on every push/
 2. Generate Prisma Client
 3. Run Linting (Turborepo — all apps)
 4. Run Backend Unit Tests (34 tests)
-5. Run Web Unit Tests (27 tests)
+5. Run Web Unit Tests (26 tests)
 6. Run Backend E2E Tests (13 tests, via Testcontainers)
 ```
 
