@@ -324,7 +324,12 @@ apps/web/
 
 ## 7. Business Rules (Pure Functions)
 
-These live in `flash-sale.logic.ts` with zero I/O dependencies:
+The system enforces a strict separation between **Thinking** (logic/decisions) and **Doing** (I/O orchestration). 
+
+- **Thinking (`flash-sale.logic.ts`)**: Side-effect free pure functions. They are deterministic, making them instantly testable across infinite edge cases without a database or Redis.
+- **Doing (`flash-sale.service.ts`)**: Orchestrates the state. It handles database transactions, Redis gates, and logging but delegates all business "decisions" to the logic layer.
+
+### 7.1 Pure Logic Inventory
 
 | Function | Input | Output | Description |
 | -------- | ----- | ------ | ----------- |
@@ -402,12 +407,12 @@ services:
 
 ## 10. Key Design Decisions & Trade-offs
 
-| Decision | Rationale | Trade-off |
-| -------- | --------- | --------- |
-| **Redis as stock gate** | O(1) rejection for sold-out state; protects DB from thundering herd | Extra infra complexity; needs rollback on DB failure |
-| **Standardized Responses** | Interceptor + Filter ensure unified {status, data/error} shape | Simplifies frontend parsing; robust error tracing |
-| **Modal Error Popups** | High-impact UI for critical failures (429, fetch error) | Clearer user feedback; prevents "invisible" failures |
-| **Friendly Mapping** | Map codes like `SOLD_OUT` to "Too late! ..." in the client | Better UX; separates engineering codes from user messages |
+| Decision | Rationale | Trade-off (The Cost) |
+| -------- | --------- | -------------------- |
+| **Redis as Stock Gate** | **O(1)** rejection for sold-out state; prevents "Thundering Herd" on the primary DB. | **Complexity & Consistency:** Introduces a distributed state problem. If Redis decrements but the DB write fails, you need a reliable compensation mechanism (rollback/re-increment) or reconciliation job. |
+| **Standardized Responses** | Interceptor + Filter ensure unified response shape (`data` for success, partitioned `error` object for failures) for all endpoints. | **Rigidity:** Adds abstraction overhead. Simple endpoints require the same wrapper boilerplate, and it can sometimes obscure native HTTP error semantics if not careful. |
+| **Modal Error Popups** | High-impact UI ensures critical failures (e.g., 429 Too Many Requests, Network Errors) aren't missed. | **Intrusive UX:** Modals block the user interface and require a click to dismiss, which can be frustrating if errors are frequent (e.g., during a spam-click scenario). |
+| **Friendly Mapping** | Maps technical error codes (e.g., `SOLD_OUT`) to user-friendly messages like "Too late! Sold out" on the client. | **Client-Server Coupling:** The frontend must maintain a mapping of backend error codes. If the backend introduces a new code, the frontend needs a deployment to handle it gracefully. |
 
 ---
 
