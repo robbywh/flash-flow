@@ -99,15 +99,25 @@ function FlashSalePage() {
   return (
     <div className="min-h-screen lg:h-screen lg:overflow-hidden flex flex-col">
       {/* Header / Hero - More compact */}
-      <header className="relative pt-8 md:pt-12 pb-4 px-6 text-center overflow-hidden shrink-0 animate-in fade-in zoom-in-95 duration-1000">
-        <div className="relative z-10 space-y-2">
-          <div className="inline-flex items-center justify-center p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 glow-cyan mb-2 animate-float">
-            <Zap className="w-6 h-6 text-cyan-400" />
+      <header className="relative pt-4 md:pt-6 pb-2 px-6 text-center overflow-hidden shrink-0">
+        {/* Background Glows */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-cyan-500/10 blur-[120px] rounded-full -z-10 animate-pulse-glow" />
+
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="inline-flex items-center justify-center p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 glow-cyan mb-2 animate-in zoom-in-50 duration-700">
+            <Zap className="w-6 h-6 text-cyan-400 animate-pulse" />
           </div>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tighter">
-            <span className="text-white">FLASH</span>{" "}
-            <span className="text-gradient">FLOW</span>
-          </h1>
+          <div className="space-y-1 max-w-2xl mx-auto">
+            <h1 className="text-4xl md:text-6xl font-black tracking-tighter animate-in slide-in-from-bottom-8 duration-1000">
+              <span className="text-white">FLASH</span>{" "}
+              <span className="text-gradient">FLOW</span>
+            </h1>
+            <p className="text-slate-400 text-sm md:text-base font-medium leading-relaxed max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+              Experience the future of high-throughput commerce.
+              <br />
+              <span className="text-slate-500">Secured, scalable, and lightning fast. </span>
+            </p>
+          </div>
         </div>
       </header>
 
@@ -127,11 +137,11 @@ function FlashSalePage() {
               <div className="glass-dark rounded-3xl p-6 md:p-8 space-y-6 flex flex-col justify-between h-full">
                 <div className="space-y-6">
                   <div className="space-y-1">
-                    <h3 className="text-2xl font-bold text-white">
-                      Secure Allocation
+                    <h3 className="text-2xl font-black text-white tracking-tight">
+                      Get It Now
                     </h3>
-                    <p className="text-xs text-slate-400">
-                      Enter your identity to participate in the active drop.
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                      Enter your details to participate in the active flash sale.
                     </p>
                   </div>
 
@@ -233,7 +243,7 @@ function FlashSalePage() {
       </main>
 
       {/* Footer Info */}
-      <footer className="shrink-0 py-4 px-6 text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">
+      <footer className="shrink-0 py-2 px-6 text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">
         © 2026 Flash Flow High-Performance Systems
       </footer>
     </div>
