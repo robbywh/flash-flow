@@ -1,14 +1,22 @@
-export class FlashSaleDto {
+import {
+  FlashSaleData,
+  PurchaseResult,
+  UserPurchaseCheck,
+  AttemptPurchaseRequest,
+  SaleStatus,
+} from 'shared';
+
+export class FlashSaleDto implements FlashSaleData {
   id!: string;
   productName!: string;
   totalStock!: number;
   remainingStock!: number;
   startTime!: string;
   endTime!: string;
-  status!: 'upcoming' | 'active' | 'ended';
+  status!: SaleStatus;
 }
 
-export class PurchaseResultDto {
+export class PurchaseResultDto implements PurchaseResult {
   purchaseId!: string;
   userId!: string;
   productName!: string;
@@ -16,12 +24,12 @@ export class PurchaseResultDto {
   purchasedAt!: string;
 }
 
-export class UserPurchaseCheckDto {
+export class UserPurchaseCheckDto implements UserPurchaseCheck {
   purchased!: boolean;
   purchaseId?: string;
   purchasedAt?: string;
 }
 
-export class AttemptPurchaseRequestDto {
+export class AttemptPurchaseRequestDto implements AttemptPurchaseRequest {
   userId!: string;
 }

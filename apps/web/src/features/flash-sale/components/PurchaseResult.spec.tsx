@@ -25,20 +25,20 @@ describe('PurchaseResult', () => {
                 purchaseId="order-123"
             />,
         );
-        expect(screen.getByText('Purchase Confirmed!')).toBeInTheDocument();
+        expect(screen.getByText('Order Secured!')).toBeInTheDocument();
         expect(screen.getByText('Item secured!')).toBeInTheDocument();
-        expect(screen.getByText('Order ID: order-123')).toBeInTheDocument();
+        expect(screen.getByText('order-123')).toBeInTheDocument();
     });
 
     it('shows success banner without purchase ID', () => {
         render(<PurchaseResult success={true} message="Item secured!" />);
-        expect(screen.getByText('Purchase Confirmed!')).toBeInTheDocument();
-        expect(screen.queryByText(/Order ID/)).not.toBeInTheDocument();
+        expect(screen.getByText('Order Secured!')).toBeInTheDocument();
+        expect(screen.queryByText(/Confirmation Pointer/)).not.toBeInTheDocument();
     });
 
     it('shows failure banner with error message', () => {
         render(<PurchaseResult success={false} message="Already purchased" />);
-        expect(screen.getByText('Purchase Failed')).toBeInTheDocument();
+        expect(screen.getByText('Action Failed')).toBeInTheDocument();
         expect(screen.getByText('Already purchased')).toBeInTheDocument();
     });
 });

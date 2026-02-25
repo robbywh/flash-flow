@@ -34,8 +34,23 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
-        {children}
+      <body className="relative">
+        {/* Global Background Elements */}
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[#020617]" />
+          <div
+            className="absolute inset-0 opacity-20 bg-cover bg-center mix-blend-overlay scale-110"
+            style={{ backgroundImage: 'url(/hero-bg.png)' }}
+          />
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px]" />
+          <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] rounded-full bg-purple-600/5 blur-[100px]" />
+        </div>
+
+        <div className="relative z-10">
+          {children}
+        </div>
+
         <TanStackDevtools
           config={{
             position: 'bottom-right',

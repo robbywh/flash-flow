@@ -31,20 +31,20 @@ export function SaleStatus({ sale, loading, error }: SaleStatusProps) {
         upcoming: {
             label: 'Coming Soon',
             color: 'text-amber-400',
-            bgColor: 'bg-amber-400/10 border-amber-400/30',
-            icon: <Clock className="w-6 h-6" />,
+            bgColor: 'bg-amber-400/10 border-amber-400/20',
+            icon: <Clock className="w-5 h-5" />,
         },
         active: {
             label: 'LIVE NOW',
-            color: 'text-emerald-400',
-            bgColor: 'bg-emerald-400/10 border-emerald-400/30',
-            icon: <Zap className="w-6 h-6" />,
+            color: 'text-cyan-400',
+            bgColor: 'bg-cyan-400/10 border-cyan-400/20 glow-cyan',
+            icon: <Zap className="w-5 h-5 fill-cyan-400" />,
         },
         ended: {
             label: 'Sale Ended',
-            color: 'text-gray-400',
-            bgColor: 'bg-gray-400/10 border-gray-400/30',
-            icon: <XCircle className="w-6 h-6" />,
+            color: 'text-slate-500',
+            bgColor: 'bg-slate-500/10 border-slate-500/20',
+            icon: <XCircle className="w-5 h-5" />,
         },
     };
 
@@ -52,64 +52,84 @@ export function SaleStatus({ sale, loading, error }: SaleStatusProps) {
     const stockPercentage = (sale.remainingStock / sale.totalStock) * 100;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-10">
             {/* Status Badge */}
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-between">
                 <div
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${config.bgColor} ${config.color} font-semibold text-sm tracking-wide`}
+                    className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl border ${config.bgColor} ${config.color} font-bold text-sm tracking-widest uppercase transition-all duration-300`}
                 >
                     {config.icon}
                     {config.label}
                     {sale.status === 'active' && (
-                        <span className="relative flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+                        <span className="relative flex h-3 w-3 ml-1">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500" />
                         </span>
                     )}
+                </div>
+
+                <div className="text-right hidden md:block">
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-tighter mb-1">Duration</p>
+                    <p className="text-sm text-slate-300 font-medium">
+                        {new Date(sale.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {' '}-{' '}
+                        {new Date(sale.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
                 </div>
             </div>
 
             {/* Product Info */}
-            <div className="text-center space-y-2">
-                <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
+            <div className="space-y-3">
+                <div className="flex items-center gap-2 text-cyan-500/80 text-xs font-bold uppercase tracking-[0.2em]">
                     <Package className="w-4 h-4" />
-                    <span>Limited Edition</span>
+                    <span>Exclusive Drop</span>
                 </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-white">
+                <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
                     {sale.productName}
                 </h2>
+                <p className="text-slate-400 text-lg max-w-md">
+                    Premium high-performance equipment designed for the elite. Available only during this flash window.
+                </p>
             </div>
 
             {/* Stock Bar */}
-            <div className="space-y-2 max-w-md mx-auto">
-                <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Stock remaining</span>
-                    <span className="text-white font-semibold">
-                        {sale.remainingStock} / {sale.totalStock}
-                    </span>
+            <div className="space-y-5">
+                <div className="flex justify-between items-end">
+                    <div className="space-y-1">
+                        <p className="text-xs text-slate-500 font-bold uppercase tracking-tighter">Availability</p>
+                        <span className="text-2xl font-black text-white">
+                            {sale.remainingStock} <span className="text-slate-600 text-lg font-medium">/ {sale.totalStock}</span>
+                        </span>
+                    </div>
+                    <div className="text-right">
+                        <span className={`text-sm font-bold ${stockPercentage > 50 ? 'text-cyan-400' : stockPercentage > 20 ? 'text-amber-400' : 'text-rose-500'
+                            }`}>
+                            {Math.round(stockPercentage)}% LEFT
+                        </span>
+                    </div>
                 </div>
-                <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-4 bg-slate-800/50 rounded-full overflow-hidden p-1 border border-slate-700/50">
                     <div
-                        className={`h-full rounded-full transition-all duration-500 ${stockPercentage > 50
-                                ? 'bg-emerald-500'
+                        className={`h-full rounded-full transition-all duration-1000 ease-out relative ${stockPercentage > 50
+                                ? 'bg-gradient-to-r from-cyan-500 to-blue-500'
                                 : stockPercentage > 20
-                                    ? 'bg-amber-500'
-                                    : 'bg-red-500'
+                                    ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+                                    : 'bg-gradient-to-r from-rose-500 to-red-600'
                             }`}
                         style={{ width: `${stockPercentage}%` }}
-                    />
+                    >
+                        {sale.status === 'active' && stockPercentage > 0 && (
+                            <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Time Info */}
-            <div className="flex justify-center gap-6 text-sm text-gray-400">
-                <div>
-                    <span className="text-gray-500">Starts: </span>
-                    {new Date(sale.startTime).toLocaleString()}
-                </div>
-                <div>
-                    <span className="text-gray-500">Ends: </span>
-                    {new Date(sale.endTime).toLocaleString()}
+            {/* Mobile Time Info */}
+            <div className="md:hidden pt-4 border-t border-slate-800">
+                <div className="flex justify-between items-center text-xs text-slate-500">
+                    <span>Starts: {new Date(sale.startTime).toLocaleString()}</span>
+                    <span>Ends: {new Date(sale.endTime).toLocaleString()}</span>
                 </div>
             </div>
         </div>

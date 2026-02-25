@@ -46,7 +46,9 @@ describe('SaleStatus', () => {
         );
         expect(screen.getByText('LIVE NOW')).toBeInTheDocument();
         expect(screen.getByText('Limited Widget')).toBeInTheDocument();
-        expect(screen.getByText('80 / 100')).toBeInTheDocument();
+        // Use getAllByText as the number might appear in multiple places (text + percentage)
+        expect(screen.getAllByText(/80/)[0]).toBeInTheDocument();
+        expect(screen.getAllByText(/\/ 100/)[0]).toBeInTheDocument();
     });
 
     it('shows "Coming Soon" badge for upcoming sale', () => {
@@ -81,7 +83,8 @@ describe('SaleStatus', () => {
         );
         const bar = container.querySelector('[style*="width: 60%"]');
         expect(bar).toBeInTheDocument();
-        expect(bar).toHaveClass('bg-emerald-500');
+        expect(bar).toHaveClass('from-cyan-500');
+        expect(bar).toHaveClass('to-blue-500');
     });
 
     it('stock bar is amber when 20-50%', () => {
@@ -94,7 +97,8 @@ describe('SaleStatus', () => {
         );
         const bar = container.querySelector('[style*="width: 30%"]');
         expect(bar).toBeInTheDocument();
-        expect(bar).toHaveClass('bg-amber-500');
+        expect(bar).toHaveClass('from-amber-500');
+        expect(bar).toHaveClass('to-orange-500');
     });
 
     it('stock bar is red when <20%', () => {
@@ -107,6 +111,7 @@ describe('SaleStatus', () => {
         );
         const bar = container.querySelector('[style*="width: 10%"]');
         expect(bar).toBeInTheDocument();
-        expect(bar).toHaveClass('bg-red-500');
+        expect(bar).toHaveClass('from-rose-500');
+        expect(bar).toHaveClass('to-red-600');
     });
 });

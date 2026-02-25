@@ -32,21 +32,26 @@ export function PurchaseButton({
             onClick={onPurchase}
             disabled={!canPurchase || loading}
             className={`
-        w-full max-w-md mx-auto flex items-center justify-center gap-3
-        px-8 py-4 rounded-xl font-bold text-lg
-        transition-all duration-300 transform
+        w-full flex items-center justify-center gap-3
+        px-8 py-5 rounded-2xl font-black text-lg uppercase tracking-widest
+        transition-all duration-300 transform relative overflow-hidden
         ${canPurchase && !loading
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-[1.02] active:scale-[0.98] cursor-pointer'
-                    : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white shadow-xl shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] cursor-pointer glow-cyan'
+                    : 'bg-slate-800 text-slate-500 border border-slate-700/50 cursor-not-allowed'
                 }
       `}
         >
             {loading ? (
                 <Loader2 className="w-6 h-6 animate-spin" />
             ) : (
-                <ShoppingBag className="w-6 h-6" />
+                <ShoppingBag className={`w-6 h-6 ${canPurchase ? 'animate-pulse' : ''}`} />
             )}
-            {buttonLabel()}
+
+            <span className="relative z-10">{buttonLabel()}</span>
+
+            {canPurchase && !loading && (
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20" />
+            )}
         </button>
     );
 }
