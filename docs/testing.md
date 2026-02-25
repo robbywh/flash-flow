@@ -4,19 +4,9 @@
 
 ## Quick Reference
 
-```bash
-# Run all backend tests (unit + E2E)
-cd apps/backend && npm run test
+## Quick Reference
 
-# Run only backend E2E (requires Docker for Testcontainers)
-cd apps/backend && npm run test:e2e
-
-# Run all frontend tests
-cd apps/web && npm run test
-
-# Run everything via CI
-# Triggered automatically on push/PR to main
-```
+Please refer to the **[Root README](../README.md#🧪-testing)** for instructions on how to run automated tests and stress tests.
 
 ---
 
@@ -227,10 +217,7 @@ We strive for deep coverage of core business logic and critical UI components. C
 
 ### How to Run
 
-| Scope | Command | Description |
-|-------|---------|-------------|
-| **Backend** | `npm run test:cov` | Generates report for API logic and services |
-| **Frontend** | `npm run test:cov` | Generates report for components and page logic |
+Refer to the **[Root README](../README.md#🧪-testing)** for coverage run commands.
 
 ### Targets
 
@@ -304,22 +291,7 @@ Users
 
 ### How to Run
 
-> **Note:** The API enforces a sliding window rate limit of **100 requests per minute** per client (configured in `apps/backend/src/app.module.ts`). For stress testing, you may want to temporarily increase the `limit` value.
-
-> **Rebuilding after code changes:** If you modify the source code while Docker is running, rebuild with `docker compose up --build -d`. Without `--build`, Docker reuses the cached image.
-
-```bash
-# Prerequisites: ensure the stack is running with seeded data (add --build if code changed)
-docker compose up --build -d
-cd apps/backend && npm run seed
-
-# Option 1: Docker (no install needed — works on macOS)
-docker run --rm -i --add-host=host.docker.internal:host-gateway \
-  grafana/k6 run - < e2e/stress/flash-sale.stress.js
-
-# Option 2: k6 installed locally
-k6 run -e BASE_URL=http://localhost:3001 e2e/stress/flash-sale.stress.js
-```
+Refer to the **[Root README](../README.md#2-stress-testing-k6)** for instructions on setting up and running stress tests.
 
 ### Sample Output
 

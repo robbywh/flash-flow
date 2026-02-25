@@ -73,23 +73,38 @@ The project maintains **>95% code coverage** for core business logic.
 
 | Command | Scope | Type |
 |---------|-------|------|
+| `npm run test` | Workspace | Run all unit tests via Turbo |
 | `cd apps/backend && npm run test` | Backend | Unit (45 tests) |
-| `cd apps/backend && npm run test:e2e` | Backend | E2E + Integration (16 tests) |
+| `cd apps/backend && npm run test:watch` | Backend | Watch mode |
+| `cd apps/backend && npm run test:cov` | Backend | Coverage report |
+| `cd apps/backend && npm run test:e2e` | Backend | E2E + Integration (19 tests) |
 | `cd apps/web && npm run test` | Frontend | Unit + Integration (37 tests) |
+| `cd apps/web && npm run test:watch` | Frontend | Watch mode |
+| `cd apps/web && npm run test:cov` | Frontend | Coverage report |
 
 > [!NOTE]
-> E2E tests use **Testcontainers** to spin up ephemeral Postgres/Redis. Ensure Docker is running.
+> E2E and Integration tests for the backend use **Testcontainers** to spin up ephemeral Postgres/Redis. Ensure Docker is running.
 
 ### 2. Stress Testing (k6)
 Simulate hundreds of concurrent users competing for limited stock.
 
-```bash
-# Start infrastructure
-docker compose up -d
+> [!IMPORTANT]
+> **Rate Limiting**: The API enforces a 100 req/min limit. Temporarily increase the `limit` in `apps/backend/src/app.module.ts` before stress testing.
+>
+> **Rebuilding**: Run `docker compose up --build -d` if you've modified source code while Docker is running.
 
-# Run stress test via Docker
+```bash
+# 1. Start infrastructure and seed (add --build if code changed)
+docker compose up -d
+cd apps/backend && npm run seed
+
+# 2. Run stress test via Docker (Return to root first)
+cd ../..
 docker run --rm -i --add-host=host.docker.internal:host-gateway \
   grafana/k6 run - < e2e/stress/flash-sale.stress.js
+
+# Alternative: If k6 is installed locally
+k6 run -e BASE_URL=http://localhost:3001 e2e/stress/flash-sale.stress.js
 ```
 
 The script simulates a 3-stage load pattern:
@@ -98,6 +113,7 @@ The script simulates a 3-stage load pattern:
 **Expected Outcome:**
 - **No Overselling**: Total purchases exactly match available stock.
 - **Idempotency**: One user gets exactly one success even if they spam requests.
+- **Performance**: p95 response time < 100ms.
 - **Graceful Failure**: Users who miss out receive a friendly `409 SOLD_OUT` modal.
 
 ---
