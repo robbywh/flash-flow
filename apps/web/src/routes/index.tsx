@@ -73,9 +73,9 @@ function FlashSalePage() {
   return (
     <div className="min-h-screen lg:h-screen lg:overflow-hidden flex flex-col">
       {/* Header / Hero - More compact */}
-      <header className="relative pt-8 md:pt-12 pb-4 px-6 text-center overflow-hidden shrink-0">
+      <header className="relative pt-8 md:pt-12 pb-4 px-6 text-center overflow-hidden shrink-0 animate-in fade-in zoom-in-95 duration-1000">
         <div className="relative z-10 space-y-2">
-          <div className="inline-flex items-center justify-center p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 glow-cyan mb-2">
+          <div className="inline-flex items-center justify-center p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 glow-cyan mb-2 animate-float">
             <Zap className="w-6 h-6 text-cyan-400" />
           </div>
           <h1 className="text-4xl md:text-6xl font-black tracking-tighter">
@@ -90,14 +90,14 @@ function FlashSalePage() {
         <div className="w-full max-w-5xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             {/* Sale Status - Left */}
-            <section className="lg:col-span-7">
+            <section className="lg:col-span-7 animate-in fade-in slide-in-from-left-8 duration-700 delay-200">
               <div className="glass-dark rounded-3xl p-6 md:p-8 h-full flex flex-col">
                 <SaleStatus sale={sale} loading={loading} error={error} />
               </div>
             </section>
 
             {/* Purchase Control - Right */}
-            <section className="lg:col-span-5 flex flex-col gap-6">
+            <section className="lg:col-span-5 flex flex-col gap-6 animate-in fade-in slide-in-from-right-8 duration-700 delay-300">
               <div className="glass-dark rounded-3xl p-6 md:p-8 space-y-6 flex flex-col justify-between h-full">
                 <div className="space-y-6">
                   <div className="space-y-1">

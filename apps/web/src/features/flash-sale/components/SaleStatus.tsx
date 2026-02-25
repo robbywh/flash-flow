@@ -152,24 +152,25 @@ export function SaleStatus({ sale, loading, error }: SaleStatusProps) {
             </div>
 
             {/* Bottom Section: Stock Management */}
-            <div className="space-y-4 pt-4 border-t border-slate-800/50">
-                <div className="flex justify-between items-end">
+            <div className="space-y-4 pt-6 border-t border-slate-800/50">
+                <div className="flex justify-between items-end px-1">
                     <div className="space-y-1">
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Inventory Status</p>
-                        <span className="text-2xl font-black text-white">
+                        <p className="text-2xl font-black text-white tracking-tighter">
                             {sale.remainingStock} <span className="text-slate-600 text-lg font-medium">/ {sale.totalStock}</span>
-                        </span>
+                        </p>
                     </div>
-                    <div className="text-right">
-                        <span className={`text-xs font-black tracking-widest ${stockPercentage > 50 ? 'text-cyan-400' : stockPercentage > 20 ? 'text-amber-400' : 'text-rose-500'
-                            }`}>
-                            {Math.round(stockPercentage)}% AVAILABLE
-                        </span>
-                    </div>
+                    <p className={`text-xs font-black uppercase tracking-widest transition-all duration-300 transform ${stockPercentage < 20 ? 'text-rose-500 scale-110' : 'text-cyan-500'}`}>
+                        {Math.round(stockPercentage)}% Available
+                    </p>
                 </div>
-                <div className="h-3 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-slate-800">
+
+                <div className="relative h-3 bg-slate-900/80 rounded-full overflow-hidden border border-slate-800/50">
+                    <div className={`absolute inset-0 opacity-20 blur-sm animate-pulse-glow ${stockPercentage > 50 ? 'bg-cyan-500' : stockPercentage > 20 ? 'bg-amber-500' : 'bg-rose-500'
+                        }`} />
+
                     <div
-                        className={`h-full rounded-full transition-all duration-1000 ease-out relative ${stockPercentage > 50
+                        className={`h-full transition-all duration-1000 ease-out relative shadow-[0_0_15px_rgba(6,182,212,0.3)] ${stockPercentage > 50
                             ? 'bg-gradient-to-r from-cyan-500 to-blue-500'
                             : stockPercentage > 20
                                 ? 'bg-gradient-to-r from-amber-500 to-orange-500'
@@ -178,7 +179,7 @@ export function SaleStatus({ sale, loading, error }: SaleStatusProps) {
                         style={{ width: `${stockPercentage}%` }}
                     >
                         {sale.status === 'active' && stockPercentage > 0 && (
-                            <div className="absolute inset-0 bg-white/10 animate-pulse" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
                         )}
                     </div>
                 </div>
