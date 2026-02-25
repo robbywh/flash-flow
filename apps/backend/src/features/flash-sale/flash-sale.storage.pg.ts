@@ -6,7 +6,7 @@ import type { FlashSaleStorage } from './flash-sale.storage';
 export class FlashSaleStoragePg implements FlashSaleStorage {
   private readonly logger = new Logger(FlashSaleStoragePg.name);
 
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async getCurrentSale() {
     return this.prisma.flashSale.findFirst({

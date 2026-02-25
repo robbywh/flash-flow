@@ -167,12 +167,14 @@ describe('FlashSaleService', () => {
     it('should increment stock back in Redis if storage.createPurchase fails', async () => {
       storage.sales.push(createActiveSale());
       // Mock createPurchase to fail
-      vi.spyOn(storage, 'createPurchase').mockRejectedValue(new Error('DB_FAIL'));
+      vi.spyOn(storage, 'createPurchase').mockRejectedValue(
+        new Error('DB_FAIL'),
+      );
       const redisSpy = vi.spyOn(redisStorage, 'incrementStock');
 
-      await expect(
-        service.attemptPurchase('user@example.com'),
-      ).rejects.toThrow('DB_FAIL');
+      await expect(service.attemptPurchase('user@example.com')).rejects.toThrow(
+        'DB_FAIL',
+      );
       expect(redisSpy).toHaveBeenCalledWith('sale-1');
     });
 
@@ -180,9 +182,9 @@ describe('FlashSaleService', () => {
       storage.sales.push(createActiveSale());
       vi.spyOn(storage, 'createPurchase').mockRejectedValue('STRING_ERROR');
 
-      await expect(
-        service.attemptPurchase('user@example.com'),
-      ).rejects.toBe('STRING_ERROR');
+      await expect(service.attemptPurchase('user@example.com')).rejects.toBe(
+        'STRING_ERROR',
+      );
     });
 
     it('should properly log and re-throw unhandled errors', async () => {
@@ -190,27 +192,31 @@ describe('FlashSaleService', () => {
       const genericError = new Error('UNHANDLED');
       vi.spyOn(storage, 'createPurchase').mockRejectedValue(genericError);
 
-      await expect(
-        service.attemptPurchase('user@example.com'),
-      ).rejects.toThrow(genericError);
+      await expect(service.attemptPurchase('user@example.com')).rejects.toThrow(
+        genericError,
+      );
     });
 
     it('should throw AlreadyPurchasedError if storage returns ALREADY_PURCHASED string', async () => {
       storage.sales.push(createActiveSale());
-      vi.spyOn(storage, 'createPurchase').mockRejectedValue(new Error('ALREADY_PURCHASED'));
+      vi.spyOn(storage, 'createPurchase').mockRejectedValue(
+        new Error('ALREADY_PURCHASED'),
+      );
 
-      await expect(
-        service.attemptPurchase('user@example.com'),
-      ).rejects.toThrow(AlreadyPurchasedError);
+      await expect(service.attemptPurchase('user@example.com')).rejects.toThrow(
+        AlreadyPurchasedError,
+      );
     });
 
     it('should throw SoldOutError if storage returns SOLD_OUT string', async () => {
       storage.sales.push(createActiveSale());
-      vi.spyOn(storage, 'createPurchase').mockRejectedValue(new Error('SOLD_OUT'));
+      vi.spyOn(storage, 'createPurchase').mockRejectedValue(
+        new Error('SOLD_OUT'),
+      );
 
-      await expect(
-        service.attemptPurchase('user@example.com'),
-      ).rejects.toThrow(SoldOutError);
+      await expect(service.attemptPurchase('user@example.com')).rejects.toThrow(
+        SoldOutError,
+      );
     });
   });
 });
