@@ -115,7 +115,9 @@ function FlashSalePage() {
             <p className="text-slate-400 text-sm md:text-base font-medium leading-relaxed max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
               Experience the future of high-throughput commerce.
               <br />
-              <span className="text-slate-500">Secured, scalable, and lightning fast. </span>
+              <span className="text-slate-500">
+                Secured, scalable, and lightning fast.{" "}
+              </span>
             </p>
           </div>
         </div>
@@ -141,7 +143,8 @@ function FlashSalePage() {
                       Get It Now
                     </h3>
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                      Enter your details to participate in the active flash sale.
+                      Enter your details to participate in the active flash
+                      sale.
                     </p>
                   </div>
 
