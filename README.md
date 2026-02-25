@@ -153,10 +153,11 @@ The script simulates a 3-stage load pattern:
 
 | Decision | Rationale | Trade-off |
 | -------- | --------- | --------- |
-| **Redis Stock Gate** | Protects PostgreSQL from thundering herd by rejecting 99% of requests at O(1). | **Distributed State**: Requires rollback logic (`INCR`) if DB write fails. |
-| **Advisory Locks** | Serializes concurrent purchases for the same user without locking the whole table. | **DB Specificity**: Advisory locks are specific to PostgreSQL. |
-| **Vertical Slicing** | Business logic organized by feature (`flash-sale/`) rather than technical layer. | **Circular Deps**: Requires strict API boundaries between features. |
-| **Modal Error UI** | High-impact feedback for critical system-level errors (429, 409). | **Interruptive**: Modals block the UI, which can be frustrating if frequent. |
+| **Redis Stock Gate** | Atomic O(1) in-memory counter rejects excess traffic instantly, protecting PostgreSQL from the "Thundering Herd". | **Distributed State**: Requires rollback logic (`INCR`) to remain eventually consistent if database writes fail. |
+| **Advisory Locks** | Serializes concurrent purchase attempts for the same user without locking the entire `flash_sales` table. | **DB Specificity**: Advisory locks are a PostgreSQL-specific feature, limiting database portability. |
+| **Vertical Slicing** | Business logic organized by feature (`flash-sale/`) rather than technical layer (Service/Repo) for better modularity. | **Interface Rigidity**: Requires strict public API boundaries between features to prevent circular dependencies. |
+| **Unified Envelope** | Global interceptors/filters ensure a standard response shape for all success and error paths. | **Boilerplate**: Adds slight abstraction overhead and requires a consistent mapping for all feature-level errors. |
+| **Modal Error UI** | High-impact feedback for critical system failures (429, 409) ensures users don't miss important state changes. | **Interruptive**: Modals block interaction, which can be frustrating if triggered frequently. |
 
 ---
 

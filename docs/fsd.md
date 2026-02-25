@@ -413,12 +413,13 @@ services:
 
 ## 10. Key Design Decisions & Trade-offs
 
-| Decision | Rationale | Trade-off (The Cost) |
-| -------- | --------- | -------------------- |
-| **Redis as Stock Gate** | **O(1)** rejection for sold-out state; prevents "Thundering Herd" on the primary DB. | **Complexity & Consistency:** Introduces a distributed state problem. If Redis decrements but the DB write fails, you need a reliable compensation mechanism (rollback/re-increment) or reconciliation job. |
-| **Standardized Responses** | Interceptor + Filter ensure unified response shape (`data` for success, partitioned `error` object for failures) for all endpoints. | **Rigidity:** Adds abstraction overhead. Simple endpoints require the same wrapper boilerplate, and it can sometimes obscure native HTTP error semantics if not careful. |
-| **Modal Error Popups** | High-impact UI ensures critical failures (e.g., 429 Too Many Requests, Network Errors) aren't missed. | **Intrusive UX:** Modals block the user interface and require a click to dismiss, which can be frustrating if errors are frequent (e.g., during a spam-click scenario). |
-| **Friendly Mapping** | Maps technical error codes (e.g., `SOLD_OUT`) to user-friendly messages like "Too late! Sold out" on the client. | **Client-Server Coupling:** The frontend must maintain a mapping of backend error codes. If the backend introduces a new code, the frontend needs a deployment to handle it gracefully. |
+| Decision | Rationale | Trade-off |
+| -------- | --------- | --------- |
+| **Redis Stock Gate** | Atomic O(1) in-memory counter rejects excess traffic instantly, protecting PostgreSQL from the "Thundering Herd". | **Distributed State**: Requires rollback logic (`INCR`) to remain eventually consistent if database writes fail. |
+| **Advisory Locks** | Serializes concurrent purchase attempts for the same user without locking the entire `flash_sales` table. | **DB Specificity**: Advisory locks are a PostgreSQL-specific feature, limiting database portability. |
+| **Vertical Slicing** | Business logic organized by feature (`flash-sale/`) rather than technical layer (Service/Repo) for better modularity. | **Interface Rigidity**: Requires strict public API boundaries between features to prevent circular dependencies. |
+| **Unified Envelope** | Global interceptors/filters ensure a standard response shape for all success and error paths. | **Boilerplate**: Adds slight abstraction overhead and requires a consistent mapping for all feature-level errors. |
+| **Modal Error UI** | High-impact feedback for critical system failures (429, 409) ensures users don't miss important state changes. | **Interruptive**: Modals block interaction, which can be frustrating if triggered frequently. |
 
 ---
 
