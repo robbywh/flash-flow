@@ -25,10 +25,10 @@ flash-flow/
 │   │   ├── prisma/
 │   │   │   └── schema.prisma   # Database schema
 │   │   └── src/
-│   │       ├── platform/       # Database (Prisma), Redis modules
+│   │       ├── platform/       # Database (Prisma), Redis, Throttler, Server Interceptors
 │   │       ├── features/
 │   │       │   └── flash-sale/ # Flash sale feature (vertical slice)
-│   │       ├── main.ts
+│   │       ├── main.ts         # Global Pipes/Interceptors setup
 │   │       └── seed.ts         # DB seed script
 │   └── web/                    # React 19 + TanStack Start (port 3000)
 │       └── src/
@@ -218,6 +218,7 @@ See [docs/fsd.md](docs/fsd.md) for the full Functional Specification Document, i
 | -------- | --------- |
 | Redis stock gate | Protects DB from thundering herd — instant rejection at O(1) |
 | PostgreSQL advisory lock | Serializes concurrent purchases without table locking |
-| Prisma ORM | Type-safe database access with auto-generated client |
+| Standardized Response | Global Interceptor/Filter ensures unified `{status, data/error}` shape |
+| Modal Error UI | High-impact modal popups for critical system failures (429, 500) |
 | Feature-based modules | Each feature is a vertical slice with isolated business logic |
 | Pure business logic | Side-effect free functions for testability |

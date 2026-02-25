@@ -1,6 +1,6 @@
 # Testing Documentation
 
-> **Total: 74 tests** (47 backend + 27 frontend)
+> **Total: 73 tests** (47 backend + 26 frontend)
 
 ## Quick Reference
 
@@ -119,16 +119,15 @@ All frontend tests use **Vitest** + **React Testing Library** + **jsdom**. No br
 |------|------------------|
 | renders nothing when success is null | Null state → no DOM output |
 | renders nothing when message is null | Partial null → no DOM output |
-| shows success banner with purchase ID | Green success banner + Order ID |
-| shows success banner without purchase ID | Success without optional field |
-| shows failure banner with error message | Red error banner + message |
+| shows success banner with purchase ID | Green success modal + Order ID |
+| shows success banner without purchase ID | Success modal without optional field |
+| shows failure banner with error message | Red error modal + message |
 
 #### `SaleStatus.spec.tsx` — Sale Status Display (9 tests)
 
 | Test | What it verifies |
 |------|------------------|
 | shows loading spinner when loading | Loading state indicator |
-| shows error message | Error state rendering |
 | renders nothing when sale is null and not loading | Empty state |
 | shows "LIVE NOW" badge for active sale | Active status badge + product info |
 | shows "Coming Soon" badge for upcoming sale | Upcoming status badge |

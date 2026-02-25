@@ -167,8 +167,8 @@ POST /api/v1/flash-sales/current/purchase
 | 409    | `ALREADY_PURCHASED` | User already bought an item |
 | 409    | `SOLD_OUT` | No stock remaining |
 | 409    | `SALE_NOT_ACTIVE` | Sale hasn't started or already ended |
-| 400    | `VALIDATION_ERROR` | Missing or invalid `userId` |
-| 429    | `RATE_LIMITED` | Too many requests |
+| 400    | `VALIDATION_ERROR` | Missing or invalid user identity |
+| 429    | `RATE_LIMIT_EXCEEDED` | Too many requests (custom throttler) |
 
 **Success (201):**
 ```json
@@ -183,18 +183,18 @@ POST /api/v1/flash-sales/current/purchase
 }
 ```
 
-**Error (409):**
+**Error (409/429):**
 ```json
 {
   "status": "error",
-  "code": 409,
   "error": {
-    "code": "SOLD_OUT",
-    "message": "All items have been sold.",
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Slow down! You are making too many requests. Please wait a moment.",
     "correlationId": "req-abc123"
   }
 }
 ```
+> **Note:** All errors are standardized via `HttpExceptionFilter` and `TransformInterceptor`.
 
 ---
 
@@ -278,9 +278,11 @@ Following the project's feature-based organization:
 apps/backend/
 ├── src/
 │   ├── platform/
-│   │   ├── database/         # TypeORM/Prisma setup, connection
+│   │   ├── database/         # Prisma setup
 │   │   ├── redis/            # Redis client setup
-│   │   └── logger/           # Structured logger (Pino/Winston)
+│   │   ├── throttler/        # Custom CustomThrottlerGuard
+│   │   ├── server/           # HttpExceptionFilter, TransformInterceptor
+│   │   └── logger/           # Structured logger
 │   ├── features/
 │   │   └── flash-sale/
 │   │       ├── flash-sale.module.ts
@@ -402,8 +404,30 @@ services:
 | Decision | Rationale | Trade-off |
 | -------- | --------- | --------- |
 | **Redis as stock gate** | O(1) rejection for sold-out state; protects DB from thundering herd | Extra infra complexity; needs rollback on DB failure |
-| **PostgreSQL advisory lock** | Prevents race between check-and-insert without table-level locking | Slightly slower than optimistic locking; simpler correctness |
-| **DB CHECK constraint** | Defense-in-depth against negative stock | Minor overhead per write (negligible) |
-| **userId as plain string (no auth)** | Project scope simplification; keeps focus on concurrency | No real authentication; easily swappable for JWT later |
-| **Computed sale status** | Single source of truth from time; no state drift | Slightly more server-side logic per request |
-| **Feature-based modules** | Follows project architecture rules; each feature is a vertical slice | N/A (aligns with existing patterns) |
+| **Standardized Responses** | Interceptor + Filter ensure unified {status, data/error} shape | Simplifies frontend parsing; robust error tracing |
+| **Modal Error Popups** | High-impact UI for critical failures (429, fetch error) | Clearer user feedback; prevents "invisible" failures |
+| **Friendly Mapping** | Map codes like `SOLD_OUT` to "Too late! ..." in the client | Better UX; separates engineering codes from user messages |
+
+---
+
+## 11. Error Handling & UI Patterns
+
+### 11.1 Backend Standardization
+The system uses a **Standardized Response Envelope**:
+- **Success (2xx)**: `{ status: "success", data: T }`
+- **Error (4xx/5xx)**: `{ status: "error", error: { code, message, correlationId } }`
+
+This is implemented via:
+1. `TransformInterceptor`: Automatically wraps valid responses.
+2. `HttpExceptionFilter`: Catches all exceptions, handles field-level validation errors, and attaches `correlationId`.
+
+### 11.2 Frontend Error UX
+Errors follow a strict hierarchy based on impact:
+1. **Critical Failures (Modal)**: System-wide or action-blocking errors (Network failure, Rate limit, Sold out) trigger a high-impact modal popup with a clear recovery action (e.g., "Try Again" or "Reload System").
+2. **Input Validation (Inline)**: Minor input errors (e.g., "Identity too short") are displayed inline above the input field to maintain focus.
+
+### 11.3 Rate Limiting UX
+When `RATE_LIMIT_EXCEEDED` is received:
+1. The backend returns a custom 429 with a friendly message.
+2. The frontend triggers the `PurchaseResult` modal in "Action Failed" mode.
+3. The UI shows a "System automatically recovering..." hint.
