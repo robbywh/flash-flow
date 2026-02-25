@@ -64,6 +64,14 @@ Flash Flow uses a vertically sliced feature-based architecture. To handle traffi
 
 ---
 
+## ⚡ Performance & Quality
+
+Flash Flow is optimized for speed, accessibility, and SEO, achieving a **perfect 100/100 score on all Lighthouse metrics**.
+
+![Lighthouse Score](assets/lighthouse.png)
+
+---
+
 ## 🚀 API Endpoints
 
 | Method | Endpoint | Description |
