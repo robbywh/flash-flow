@@ -336,7 +336,7 @@ These live in `flash-sale.logic.ts` with zero I/O dependencies:
 
 ## 8. Testing Strategy
 
-### 8.1 Unit Tests (Jest — Backend)
+### 8.1 Unit Tests (Vitest — Backend)
 
 | What | How |
 | ---- | --- |
