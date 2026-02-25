@@ -11,8 +11,8 @@ import { FlashSaleModule } from './features/flash-sale/flash-sale.module';
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([
       {
-        ttl: 60000,  // 1 minute (in milliseconds)
-        limit: 100,  // 100 requests per minute
+        ttl: 60000, // 1 minute (in milliseconds)
+        limit: 100, // 100 requests per minute
       },
     ]),
     DatabaseModule,
@@ -26,4 +26,4 @@ import { FlashSaleModule } from './features/flash-sale/flash-sale.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
