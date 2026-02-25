@@ -11,7 +11,14 @@ export default defineConfig({
             provider: 'v8',
             reporter: ['text', 'lcov'],
             include: ['**/*.ts'],
-            exclude: ['**/*.spec.ts', '**/*.module.ts', '**/main.ts'],
+            exclude: [
+                '**/*.spec.ts',
+                '**/*.module.ts',
+                '**/main.ts',
+                'seed.ts',
+                '**/*.dto.ts',
+                'platform/database/prisma.service.ts',
+            ],
         },
     },
     plugins: [

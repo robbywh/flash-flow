@@ -130,21 +130,24 @@ docker compose down        # Stop containers
 
 The project uses **Vitest** for all automated testing.
 
-### 1. Unit Tests
+### 1. Unit & Integration Tests
 
-Unit tests run extremely fast and do not require any external infrastructure. Business logic (`.logic.ts`) is tested purely, and services (`.service.ts`) are tested using mocks.
+Unit tests are fast and run in-memory. Frontend integration tests verify the UI flow using mocked APIs.
 
+#### **Backend (`apps/backend`)** — 34 unit tests
 ```bash
 cd apps/backend
+npm run test          # Run all unit tests
+npm run test:watch    # Watch mode
+npm run test:cov      # Coverage report
+```
 
-# Run unit tests
-npm run test
-
-# Run in watch mode (for development)
-npm run test:watch
-
-# Run with coverage report
-npm run test:cov
+#### **Frontend (`apps/web`)** — 31 tests (Unit + Integration)
+```bash
+cd apps/web
+npm run test          # Run all component and integration tests
+npm run test:watch    # Watch mode
+npm run test:cov      # Coverage report
 ```
 
 ### 2. End-to-End (E2E) Tests

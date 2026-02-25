@@ -1,68 +1,85 @@
 import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
+    ExceptionFilter,
+    Catch,
+    ArgumentsHost,
+    HttpException,
+    HttpStatus,
+    Injectable,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiErrorResponse } from 'shared';
+import { Logger } from '@nestjs/common';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
+    private readonly logger = new Logger(HttpExceptionFilter.name);
 
-    let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error';
-    let errorCode = 'INTERNAL_ERROR';
+    catch(exception: unknown, host: ArgumentsHost) {
+        const ctx = host.switchToHttp();
+        const response = ctx.getResponse<Response>();
+        const request = ctx.getRequest<Request>();
 
-    if (exception instanceof HttpException) {
-      statusCode = exception.getStatus();
-      const res = exception.getResponse();
+        let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+        let message = 'Internal server error';
+        let errorCode = 'INTERNAL_ERROR';
 
-      if (typeof res === 'object' && res !== null) {
-        const responseObj = res as Record<string, unknown>;
-        if (responseObj.message && Array.isArray(responseObj.message)) {
-          message = responseObj.message.join(', ');
-          errorCode = 'VALIDATION_ERROR';
-        } else {
-          message = (responseObj.message as string) || exception.message;
-          errorCode = (responseObj.code as string) || 'HTTP_ERROR';
+        if (exception instanceof HttpException) {
+            statusCode = exception.getStatus();
+            const res = exception.getResponse();
+
+            if (typeof res === 'object' && res !== null) {
+                const responseObj = res as Record<string, unknown>;
+                if (responseObj.message && Array.isArray(responseObj.message)) {
+                    message = responseObj.message.join(', ');
+                    errorCode = 'VALIDATION_ERROR';
+                } else {
+                    message = (responseObj.message as string) || exception.message;
+                    errorCode = (responseObj.code as string) || 'HTTP_ERROR';
+                }
+            } else {
+                message = exception.message;
+            }
+        } else if (exception instanceof Error) {
+            const errorWithStatus = exception as Error & {
+                statusCode?: number;
+                status?: number;
+                errorCode?: string;
+                code?: string;
+            };
+            statusCode =
+                errorWithStatus.statusCode ||
+                errorWithStatus.status ||
+                HttpStatus.INTERNAL_SERVER_ERROR;
+            message = exception.message;
+            errorCode =
+                errorWithStatus.errorCode || errorWithStatus.code || 'INTERNAL_ERROR';
         }
-      } else {
-        message = exception.message;
-      }
-    } else if (exception instanceof Error) {
-      const errorWithStatus = exception as Error & {
-        statusCode?: number;
-        status?: number;
-        errorCode?: string;
-        code?: string;
-      };
-      statusCode =
-        errorWithStatus.statusCode ||
-        errorWithStatus.status ||
-        HttpStatus.INTERNAL_SERVER_ERROR;
-      message = exception.message;
-      errorCode =
-        errorWithStatus.errorCode || errorWithStatus.code || 'INTERNAL_ERROR';
+
+        const correlationId = uuidv4();
+
+        this.logger.error({
+            correlationId,
+            operation: 'http_exception',
+            status: 'error',
+            statusCode,
+            errorCode,
+            message,
+            path: request.url,
+            method: request.method,
+            stack: exception instanceof Error ? exception.stack : undefined,
+        });
+
+        const errorResponse: ApiErrorResponse = {
+            status: 'error',
+            code: statusCode,
+            error: {
+                code: errorCode,
+                message,
+                correlationId,
+            },
+        };
+
+        response.status(statusCode).json(errorResponse);
     }
-
-    const correlationId = uuidv4();
-
-    const errorResponse: ApiErrorResponse = {
-      status: 'error',
-      code: statusCode,
-      error: {
-        code: errorCode,
-        message,
-        correlationId,
-      },
-    };
-
-    response.status(statusCode).json(errorResponse);
-  }
 }

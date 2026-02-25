@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { render, screen, act } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
 import { SaleStatus } from "./SaleStatus";
 import type { FlashSaleData } from "../types/flash-sale.types";
 
@@ -78,7 +78,7 @@ describe("SaleStatus", () => {
     expect(bar).toHaveClass("to-orange-500");
   });
 
-  it("stock bar is red when <20%", () => {
+  it("red bar when <20%", () => {
     const { container } = render(
       <SaleStatus
         sale={makeSale({ remainingStock: 10, totalStock: 100 })}
@@ -89,5 +89,67 @@ describe("SaleStatus", () => {
     expect(bar).toBeInTheDocument();
     expect(bar).toHaveClass("from-rose-500");
     expect(bar).toHaveClass("to-red-600");
+  });
+
+  describe("Timer Logic", () => {
+    it("updates the timer every second for active sale", () => {
+      vi.useFakeTimers();
+      const startTime = new Date("2026-01-01T00:00:00Z").toISOString();
+      const endTime = new Date("2026-01-01T01:00:00Z").toISOString();
+      const sale = makeSale({ startTime, endTime, status: "active" });
+
+      // Mock Date.now to be just before the end
+      const now = new Date("2026-01-01T00:59:50Z").getTime();
+      vi.setSystemTime(now);
+
+      render(<SaleStatus sale={sale} loading={false} />);
+
+      expect(screen.getByText("00:00:10")).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      expect(screen.getByText("00:00:09")).toBeInTheDocument();
+
+      vi.useRealTimers();
+    });
+
+    it("displays 00:00:00 when sale ends", () => {
+      vi.useFakeTimers();
+      const past = new Date(Date.now() - 1000).toISOString();
+      const evenFurtherPast = new Date(Date.now() - 2000).toISOString();
+      const sale = makeSale({
+        startTime: evenFurtherPast,
+        endTime: past,
+        status: "active",
+      });
+
+      render(<SaleStatus sale={sale} loading={false} />);
+
+      expect(screen.getByText("00:00:00")).toBeInTheDocument();
+      vi.useRealTimers();
+    });
+
+    it("counts down to start time for upcoming sale", () => {
+      vi.useFakeTimers();
+      const now = new Date("2026-01-01T00:00:00Z").getTime();
+      vi.setSystemTime(now);
+
+      const startTime = new Date("2026-01-01T00:00:10Z").toISOString();
+      const endTime = new Date("2026-01-01T01:00:00Z").toISOString();
+      const sale = makeSale({ startTime, endTime, status: "upcoming" });
+
+      render(<SaleStatus sale={sale} loading={false} />);
+
+      expect(screen.getByText("00:00:10")).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      expect(screen.getByText("00:00:09")).toBeInTheDocument();
+      vi.useRealTimers();
+    });
   });
 });

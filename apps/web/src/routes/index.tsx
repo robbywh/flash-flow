@@ -37,7 +37,7 @@ const getFriendlyErrorMessage = (error: any): string => {
   return message;
 };
 
-function FlashSalePage() {
+export function FlashSalePage() {
   const [sale, setSale] = useState<FlashSaleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

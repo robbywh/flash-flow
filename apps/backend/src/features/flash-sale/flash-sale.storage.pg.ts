@@ -6,7 +6,7 @@ import type { FlashSaleStorage } from './flash-sale.storage';
 export class FlashSaleStoragePg implements FlashSaleStorage {
   private readonly logger = new Logger(FlashSaleStoragePg.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async getCurrentSale() {
     return this.prisma.flashSale.findFirst({
@@ -34,21 +34,13 @@ export class FlashSaleStoragePg implements FlashSaleStorage {
         throw new Error('ALREADY_PURCHASED');
       }
 
-      // Decrement stock using Prisma's typed update instead of raw SQL
-      // This avoids parameterization issues with the PrismaPg adapter
-      try {
-        await tx.flashSale.update({
-          where: { id: flashSaleId },
-          data: { remainingStock: { decrement: 1 } },
-        });
-      } catch (error: unknown) {
-        // CHECK constraint violation or no rows updated
-        this.logger.warn({
-          operation: 'createPurchase',
-          step: 'decrement_stock',
-          error: error instanceof Error ? error.message : 'Unknown',
-          flashSaleId,
-        });
+      // Decrement stock using updateMany to ensure we only decrement if stock > 0
+      const result = await tx.flashSale.updateMany({
+        where: { id: flashSaleId, remainingStock: { gt: 0 } },
+        data: { remainingStock: { decrement: 1 } },
+      });
+
+      if (result.count === 0) {
         throw new Error('SOLD_OUT');
       }
 

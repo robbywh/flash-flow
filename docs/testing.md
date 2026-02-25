@@ -1,6 +1,6 @@
 # Testing Documentation
 
-> **Total: 73 tests** (47 backend + 26 frontend)
+> **Total: 98 tests** (61 backend + 37 frontend)
 
 ## Quick Reference
 
@@ -20,9 +20,9 @@ cd apps/web && npm run test
 
 ---
 
-## Backend Tests (`apps/backend`) — 47 tests
+## Backend Tests (`apps/backend`) — 61 tests
 
-### Unit Tests — 34 tests
+### Unit Tests — 45 tests
 
 All unit tests run in-memory using `MockFlashSaleStorage` and `MockFlashSaleRedisStorage`. No database or Redis required.
 
@@ -49,7 +49,7 @@ All unit tests run in-memory using `MockFlashSaleStorage` and `MockFlashSaleRedi
 | | should reject too long userId | Max length guard |
 | | should reject whitespace-only userId | Whitespace guard |
 
-#### `flash-sale.service.spec.ts` — Service Orchestration (16 tests)
+#### `flash-sale.service.spec.ts` — Service Orchestration (21 tests)
 
 | Group | Test | What it verifies |
 |-------|------|------------------|
@@ -62,6 +62,8 @@ All unit tests run in-memory using `MockFlashSaleStorage` and `MockFlashSaleRedi
 | | should throw SaleNotActiveError when sale is upcoming | Pre-sale guard |
 | | should throw AlreadyPurchasedError on duplicate purchase | Idempotency guard |
 | | should throw SoldOutError when stock is exhausted | Stock guard |
+| | should handle and re-throw storage errors | Error re-mapping (AlreadyPurchased/SoldOut) |
+| | should handle and re-throw generic errors | UNHANDLED mapping |
 | | should throw validation error for empty userId | Input validation |
 | | should throw validation error for short userId | Input validation |
 | | should decrement stock for each purchase | Stock accounting |
@@ -69,6 +71,34 @@ All unit tests run in-memory using `MockFlashSaleStorage` and `MockFlashSaleRedi
 | | should return purchased: false when user has not purchased | Lookup miss |
 | | should throw SaleNotFoundError when no sale | Missing sale guard |
 | | should throw validation error for invalid userId | Input validation |
+
+#### `http-exception.filter.spec.ts` — Global Error Handling (5 tests)
+
+| Test | What it verifies |
+|------|------------------|
+| should handle FlashSaleError with custom codes | Standard error mapping |
+| should handle BadRequestException from validation | Pipe error mapping |
+| should handle generic Error (non-HttpException) | 500 mapping |
+| should handle Error with .status property | Status code extraction |
+| should use exception.message if response object message is missing | Message extraction |
+
+#### `custom-throttler.guard.spec.ts` — Rate Limiting (1 test)
+
+| Test | What it verifies |
+|------|------------------|
+| should throw FlashSaleError with 429 and RATE_LIMIT_EXCEEDED | Custom rate limit response |
+
+### Integration Tests — 3 tests
+
+#### `flash-sale.storage.pg.integration.spec.ts` — PostgreSQL Storage
+
+Integration tests using **Testcontainers** for a real PostgreSQL instance.
+
+| Test | What it verifies |
+|------|------------------|
+| should not allow duplicate purchase (UQ constraint) | Database integrity |
+| should handle race conditions for last item | Atomic stock decrement |
+| should return SOLD_OUT via updateMany check | Stock exhaustion guard |
 
 ### E2E Tests — 13 tests
 
@@ -94,11 +124,11 @@ E2E tests spin up a real NestJS app with **Testcontainers** (PostgreSQL + Redis)
 
 ---
 
-## Frontend Tests (`apps/web`) — 26 tests
+## Frontend Tests (`apps/web`) — 37 tests
 
 All frontend tests use **Vitest** + **React Testing Library** + **jsdom**. No browser or backend server required.
 
-### Unit Tests — Components (22 tests)
+### Unit Tests — 24 tests
 
 #### `PurchaseButton.spec.tsx` — Purchase Button States (8 tests)
 
@@ -123,7 +153,7 @@ All frontend tests use **Vitest** + **React Testing Library** + **jsdom**. No br
 | shows success banner without purchase ID | Success modal without optional field |
 | shows failure banner with error message | Red error modal + message |
 
-#### `SaleStatus.spec.tsx` — Sale Status Display (8 tests)
+#### `SaleStatus.spec.tsx` — Sale Status Display (11 tests)
 
 | Test | What it verifies |
 |------|------------------|
@@ -132,11 +162,27 @@ All frontend tests use **Vitest** + **React Testing Library** + **jsdom**. No br
 | shows "LIVE NOW" badge for active sale | Active status badge + product info |
 | shows "Coming Soon" badge for upcoming sale | Upcoming status badge |
 | shows "Sale Ended" badge for ended sale | Ended status badge |
-| stock bar is green when >50% | Visual threshold: healthy stock |
-| stock bar is amber when 20-50% | Visual threshold: low stock |
-| stock bar is red when <20% | Visual threshold: critical stock |
+| stock bar is green/amber/red based on stock | Visual thresholds |
+| **Timer updates every second** | **Countdown logic (Fake Timers)** |
+| **Shows 00:00:00 on expiry** | **Boundary logic** |
+| **Countdown to start time** | **Upcoming sale logic** |
 
-### Integration Tests — API Adapter (5 tests)
+### Integration Tests — 13 tests
+
+#### `index.spec.tsx` — Flash Sale Page (8 tests)
+
+Verifies high-level orchestration, navigation, and modal state transitions.
+
+| Group | Test | What it verifies |
+|-------|------|------------------|
+| **Core Flows** | loads and displays the sale status | Mount → API load → UI render |
+| | executes successful purchase flow | Input → Click → Success Modal |
+| | **handleReset clears the state** | **Reset button → UI return to neutral** |
+| **Validation** | displays error modal when rate limited | 429 error mapping |
+| | displays error modal when sold out | 409 error mapping |
+| | **clears error on typing** | **Input change → State cleanup** |
+| | **shows short userId warning** | **Live validation message** |
+| **System** | shows system alert when initial load fails | Global failure state |
 
 #### `flash-sale.api.backend.spec.ts` — HTTP Adapter (5 tests)
 
@@ -160,10 +206,37 @@ The [GitHub Actions workflow](../.github/workflows/test.yml) runs on every push/
 1. Install dependencies
 2. Generate Prisma Client
 3. Run Linting (Turborepo — all apps)
-4. Run Backend Unit Tests (34 tests)
-5. Run Web Unit Tests (26 tests)
+4. Run Backend Unit Tests (45 tests)
+5. Run Web Unit Tests (24 tests)
 6. Run Backend E2E Tests (13 tests, via Testcontainers)
+7. Run Backend Integration Tests (3 tests, via Testcontainers)
 ```
+
+---
+
+## Code Coverage
+
+We strive for deep coverage of core business logic and critical UI components. Coverage is tracked using the **v8** provider with refined exclusions to ensure "truthful" metrics (boilerplate, barrel files, and types are excluded).
+
+### Current Statistics
+
+| Scope | Stmts % | Branch % | Funcs % | Lines % |
+|-------|---------|----------|----------|----------|
+| **Backend** | ~98.36% | ~92.00% | 100% | ~99.43% |
+| **Frontend** | ~97.56% | ~91.52% | 90.00% | ~97.56% |
+
+### How to Run
+
+| Scope | Command | Description |
+|-------|---------|-------------|
+| **Backend** | `npm run test:cov` | Generates report for API logic and services |
+| **Frontend** | `npm run test:cov` | Generates report for components and page logic |
+
+### Targets
+
+- **Core Logic (`.logic.ts`, `.service.ts`)**: >98% (Excluding external drivers)
+- **UI Components (`.tsx`)**: >95% (Excluding boilerplate/router)
+- **Interceptors/Filters**: 100% (Critical system paths)
 
 ---
 
