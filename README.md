@@ -66,6 +66,9 @@ Flash Flow uses a vertically sliced feature-based architecture. To handle traffi
 
 The project maintains **>95% code coverage** for core business logic.
 
+> [!TIP]
+> A comprehensive breakdown of our testing methodology, coverage reports, and CI/CD integration is available in the **[Testing Strategy](docs/testing.md)**.
+
 ### 1. Automated Tests (Total: 98 tests)
 
 | Command | Scope | Type |
