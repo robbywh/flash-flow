@@ -5,10 +5,9 @@ import { useState, useEffect } from 'react';
 interface SaleStatusProps {
     sale: FlashSaleData | null;
     loading: boolean;
-    error: string | null;
 }
 
-export function SaleStatus({ sale, loading, error }: SaleStatusProps) {
+export function SaleStatus({ sale, loading }: SaleStatusProps) {
     const [timeLeft, setTimeLeft] = useState<string>('');
 
     useEffect(() => {
@@ -45,15 +44,6 @@ export function SaleStatus({ sale, loading, error }: SaleStatusProps) {
         return (
             <div className="flex items-center justify-center py-12">
                 <div className="animate-spin h-8 w-8 border-4 border-cyan-400 border-t-transparent rounded-full" />
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-center">
-                <XCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-                <p className="text-red-300 text-lg">{error}</p>
             </div>
         );
     }

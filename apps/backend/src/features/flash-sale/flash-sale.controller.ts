@@ -17,7 +17,7 @@ import {
 
 @Controller('api/v1/flash-sales')
 export class FlashSaleController {
-  constructor(private readonly flashSaleService: FlashSaleService) { }
+  constructor(private readonly flashSaleService: FlashSaleService) {}
 
   @Get('current')
   async getCurrentSale(): Promise<FlashSaleDto> {

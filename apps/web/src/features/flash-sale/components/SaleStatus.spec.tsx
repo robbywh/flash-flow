@@ -19,30 +19,24 @@ function makeSale(overrides: Partial<FlashSaleData> = {}): FlashSaleData {
 describe('SaleStatus', () => {
     it('shows loading spinner when loading', () => {
         const { container } = render(
-            <SaleStatus sale={null} loading={true} error={null} />,
+            <SaleStatus sale={null} loading={true} />,
         );
         // The spinner is a div with animate-spin class
         const spinner = container.querySelector('.animate-spin');
         expect(spinner).toBeInTheDocument();
     });
 
-    it('shows error message', () => {
-        render(
-            <SaleStatus sale={null} loading={false} error="Network error" />,
-        );
-        expect(screen.getByText('Network error')).toBeInTheDocument();
-    });
 
     it('renders nothing when sale is null and not loading', () => {
         const { container } = render(
-            <SaleStatus sale={null} loading={false} error={null} />,
+            <SaleStatus sale={null} loading={false} />,
         );
         expect(container.innerHTML).toBe('');
     });
 
     it('shows "LIVE NOW" badge for active sale', () => {
         render(
-            <SaleStatus sale={makeSale({ status: 'active' })} loading={false} error={null} />,
+            <SaleStatus sale={makeSale({ status: 'active' })} loading={false} />,
         );
         expect(screen.getByText('LIVE NOW')).toBeInTheDocument();
         expect(screen.getByText('Limited Widget')).toBeInTheDocument();
@@ -56,7 +50,7 @@ describe('SaleStatus', () => {
             <SaleStatus
                 sale={makeSale({ status: 'upcoming' })}
                 loading={false}
-                error={null}
+
             />,
         );
         expect(screen.getByText('Coming Soon')).toBeInTheDocument();
@@ -67,7 +61,7 @@ describe('SaleStatus', () => {
             <SaleStatus
                 sale={makeSale({ status: 'ended' })}
                 loading={false}
-                error={null}
+
             />,
         );
         expect(screen.getByText('Sale Ended')).toBeInTheDocument();
@@ -78,7 +72,7 @@ describe('SaleStatus', () => {
             <SaleStatus
                 sale={makeSale({ remainingStock: 60, totalStock: 100 })}
                 loading={false}
-                error={null}
+
             />,
         );
         const bar = container.querySelector('[style*="width: 60%"]');
@@ -92,7 +86,7 @@ describe('SaleStatus', () => {
             <SaleStatus
                 sale={makeSale({ remainingStock: 30, totalStock: 100 })}
                 loading={false}
-                error={null}
+
             />,
         );
         const bar = container.querySelector('[style*="width: 30%"]');
@@ -106,7 +100,7 @@ describe('SaleStatus', () => {
             <SaleStatus
                 sale={makeSale({ remainingStock: 10, totalStock: 100 })}
                 loading={false}
-                error={null}
+
             />,
         );
         const bar = container.querySelector('[style*="width: 10%"]');

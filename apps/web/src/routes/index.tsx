@@ -9,6 +9,29 @@ import type { FlashSaleData } from '../features/flash-sale';
 
 export const Route = createFileRoute('/')({ component: FlashSalePage });
 
+const getFriendlyErrorMessage = (error: any): string => {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (message.includes('RATE_LIMIT_EXCEEDED') || message.includes('Too Many Requests') || message.includes('failed to fetch')) {
+    return "Slow down! You're making too many requests. Please wait a moment.";
+  }
+  if (message.includes('SOLD_OUT')) {
+    return "Too late! This drop has been fully secured by others.";
+  }
+  if (message.includes('ALREADY_PURCHASED')) {
+    return "You've already secured your allocation for this drop.";
+  }
+  if (message.includes('SALE_NOT_ACTIVE')) {
+    if (message.includes('upcoming')) return "Preparation in progress. This drop hasn't started yet.";
+    return "This drop has concluded. Stay tuned for the next one!";
+  }
+  if (message.includes('VALIDATION_ERROR')) {
+    return "Identity verification failed. Please check your credentials.";
+  }
+
+  return message;
+};
+
 function FlashSalePage() {
   const [sale, setSale] = useState<FlashSaleData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,7 +48,7 @@ function FlashSalePage() {
       setSale(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load sale');
+      setError(getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -62,9 +85,7 @@ function FlashSalePage() {
       fetchSale(); // Refresh stock
     } catch (err) {
       setPurchaseSuccess(false);
-      setPurchaseMessage(
-        err instanceof Error ? err.message : 'Purchase failed',
-      );
+      setPurchaseMessage(getFriendlyErrorMessage(err));
     } finally {
       setPurchasing(false);
     }
@@ -92,7 +113,7 @@ function FlashSalePage() {
             {/* Sale Status - Left */}
             <section className="lg:col-span-7 animate-in fade-in slide-in-from-left-8 duration-700 delay-200">
               <div className="glass-dark rounded-3xl p-6 md:p-8 h-full flex flex-col">
-                <SaleStatus sale={sale} loading={loading} error={error} />
+                <SaleStatus sale={sale} loading={loading} />
               </div>
             </section>
 
@@ -135,22 +156,17 @@ function FlashSalePage() {
                       />
                     </div>
 
-                    {/* External Info/Error Area - Rigid height to prevent button movement */}
+                    {/* External Info Area */}
                     <div className="h-12 flex items-center px-1 shrink-0">
                       <div className="w-full">
-                        {!userId.trim() && sale?.status === 'active' && !purchaseSuccess && (
+                        {!userId.trim() && sale?.status === 'active' && purchaseSuccess === null && (
                           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider animate-pulse">
                             Requires a valid identity to proceed
                           </p>
                         )}
-                        {userId.trim() && userId.trim().length < 3 && sale?.status === 'active' && !purchaseSuccess && (
+                        {userId.trim() && userId.trim().length < 3 && sale?.status === 'active' && purchaseSuccess === null && (
                           <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider leading-tight">
                             Identity must be at least 3 characters
-                          </p>
-                        )}
-                        {purchaseSuccess === false && (
-                          <p className="text-xs text-rose-500 font-bold leading-tight line-clamp-2">
-                            {purchaseMessage}
                           </p>
                         )}
                       </div>
@@ -159,7 +175,7 @@ function FlashSalePage() {
                     {/* Purchase Button */}
                     <PurchaseButton
                       userId={userId}
-                      disabled={purchaseSuccess === true}
+                      disabled={purchaseSuccess !== null}
                       loading={purchasing}
                       saleStatus={sale?.status ?? null}
                       onPurchase={handlePurchase}
@@ -176,8 +192,19 @@ function FlashSalePage() {
                 </div>
               </div>
 
-              {/* Purchase Success Modal Overlay Or Inline Result */}
-              {purchaseSuccess && (
+              {/* Global Error Modal (Fetch Failures) */}
+              {error && (
+                <PurchaseResult
+                  success={false}
+                  title="System Alert"
+                  message={error}
+                  buttonText="Reload System"
+                  onRetry={fetchSale}
+                />
+              )}
+
+              {/* Purchase Result (Modal for Success, Inline for Failure) */}
+              {purchaseSuccess !== null && (
                 <PurchaseResult
                   success={purchaseSuccess}
                   message={purchaseMessage}
